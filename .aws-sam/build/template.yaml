@@ -1,21 +1,24 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: HR Vacancy Bot — AWS Lambda
-
+Description: "HR Vacancy Bot \u2014 AWS Lambda"
 Globals:
   Function:
     Runtime: java21
     MemorySize: 1024
     Architectures:
-      - arm64
+    - arm64
     Environment:
       Variables:
-        SPRING_DATASOURCE_URL: !Ref SpringDatasourceUrl
-        SPRING_DATASOURCE_USERNAME: !Ref SpringDatasourceUsername
-        SPRING_DATASOURCE_PASSWORD: !Ref SpringDatasourcePassword
-        BOT_TOKEN: !Ref BotToken
-        DEEPSEEK_API_KEY: !Ref DeepSeekApiKey
-
+        SPRING_DATASOURCE_URL:
+          Ref: SpringDatasourceUrl
+        SPRING_DATASOURCE_USERNAME:
+          Ref: SpringDatasourceUsername
+        SPRING_DATASOURCE_PASSWORD:
+          Ref: SpringDatasourcePassword
+        BOT_TOKEN:
+          Ref: BotToken
+        DEEPSEEK_API_KEY:
+          Ref: DeepSeekApiKey
 Parameters:
   SpringDatasourceUrl:
     Type: String
@@ -35,14 +38,13 @@ Parameters:
     Type: String
     NoEcho: true
     Description: DeepSeek API key
-
 Resources:
   BotHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: hr-vacancy-bot-handler
       Handler: com.hrbot.lambda.BotHandlerLambda::handleRequest
-      CodeUri: .
+      CodeUri: BotHandlerFunction
       Timeout: 60
       SnapStart:
         ApplyOn: PublishedVersions
@@ -53,13 +55,14 @@ Resources:
           Properties:
             Path: /webhook
             Method: POST
-
+    Metadata:
+      SamResourceId: BotHandlerFunction
   VacancyScannerFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: hr-vacancy-bot-scanner
       Handler: com.hrbot.lambda.ScannerLambda::handleRequest
-      CodeUri: .
+      CodeUri: VacancyScannerFunction
       Timeout: 300
       MemorySize: 1024
       SnapStart:
@@ -71,8 +74,10 @@ Resources:
           Properties:
             Schedule: rate(2 hours)
             Enabled: true
-
+    Metadata:
+      SamResourceId: VacancyScannerFunction
 Outputs:
   WebhookUrl:
-    Description: Telegram webhook URL — register this with setWebhook
-    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook"
+    Description: "Telegram webhook URL \u2014 register this with setWebhook"
+    Value:
+      Fn::Sub: https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook

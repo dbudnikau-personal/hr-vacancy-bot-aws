@@ -1,7 +1,6 @@
 package com.hrbot.bot.command;
 
 import com.hrbot.bot.MessageSender;
-import com.hrbot.bot.TelegramBot;
 import com.hrbot.model.VacancyFilter;
 import com.hrbot.parser.ParserRegistry;
 import com.hrbot.service.FilterService;

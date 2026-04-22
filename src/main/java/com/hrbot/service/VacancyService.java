@@ -1,5 +1,6 @@
 package com.hrbot.service;
 
+import com.hrbot.ai.VacancyRelevanceService;
 import com.hrbot.model.ScanResult;
 import com.hrbot.model.Vacancy;
 import com.hrbot.model.VacancyFilter;
@@ -21,6 +22,7 @@ public class VacancyService {
     private final ParserRegistry parserRegistry;
     private final DiffDetectorService diffDetector;
     private final ParserStatusRegistry statusRegistry;
+    private final VacancyRelevanceService relevanceService;
 
     public ScanResult scanForFilter(VacancyFilter filter) {
         List<Vacancy> allFound = new ArrayList<>();
@@ -29,18 +31,27 @@ public class VacancyService {
             try {
                 SiteParser parser = parserRegistry.getParser(siteKey);
                 List<Vacancy> vacancies = parser.parse(filter);
-                allFound.addAll(vacancies);
+                List<Vacancy> relevant = filterByRelevance(vacancies, filter);
+                allFound.addAll(relevant);
 
-                // Record success
-                statusRegistry.recordSuccess(siteKey, vacancies.size());
+                log.info("Site [{}]: {} found, {} relevant after AI filter", siteKey, vacancies.size(), relevant.size());
+                statusRegistry.recordSuccess(siteKey, relevant.size());
 
             } catch (Exception e) {
                 log.error("Error parsing site [{}] for filter [{}]: {}", siteKey, filter.getName(), e.getMessage());
-                // Record error — visible via /status
                 statusRegistry.recordError(siteKey, e.getMessage());
             }
         }
 
         return diffDetector.detectChanges(allFound);
+    }
+
+    private List<Vacancy> filterByRelevance(List<Vacancy> vacancies, VacancyFilter filter) {
+        if (filter.getKeywords() == null || filter.getKeywords().isBlank()) {
+            return vacancies;
+        }
+        return vacancies.stream()
+                .filter(v -> relevanceService.isRelevant(v, filter))
+                .toList();
     }
 }
