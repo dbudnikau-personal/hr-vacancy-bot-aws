@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/hrbot}
-    username: ${SPRING_DATASOURCE_USERNAME:hrbot}
-    password: ${SPRING_DATASOURCE_PASSWORD:hrbot}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -16,8 +16,6 @@ spring:
 
 bot:
   token: ${BOT_TOKEN}
-  scan:
-    cron: ${BOT_SCAN_CRON:0 0 */2 * * *}
 
 logging:
   level:

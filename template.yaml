@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: HR Vacancy Bot — AWS Lambda
+
+Globals:
+  Function:
+    Runtime: java21
+    MemorySize: 512
+    Environment:
+      Variables:
+        SPRING_DATASOURCE_URL: !Ref SpringDatasourceUrl
+        SPRING_DATASOURCE_USERNAME: !Ref SpringDatasourceUsername
+        SPRING_DATASOURCE_PASSWORD: !Ref SpringDatasourcePassword
+        BOT_TOKEN: !Ref BotToken
+
+Parameters:
+  SpringDatasourceUrl:
+    Type: String
+    Description: JDBC URL for PostgreSQL (Neon)
+  SpringDatasourceUsername:
+    Type: String
+    Description: Database user
+  SpringDatasourcePassword:
+    Type: String
+    NoEcho: true
+    Description: Database password
+  BotToken:
+    Type: String
+    NoEcho: true
+    Description: Telegram bot token
+
+Resources:
+  BotHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hr-vacancy-bot-handler
+      Handler: com.hrbot.lambda.BotHandlerLambda::handleRequest
+      CodeUri: target/hr-vacancy-bot-aws-0.0.1-SNAPSHOT.jar
+      Timeout: 30
+      SnapStart:
+        ApplyOn: PublishedVersions
+      AutoPublishAlias: live
+      Events:
+        WebhookApi:
+          Type: HttpApi
+          Properties:
+            Path: /webhook
+            Method: POST
+
+  VacancyScannerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hr-vacancy-bot-scanner
+      Handler: com.hrbot.lambda.ScannerLambda::handleRequest
+      CodeUri: target/hr-vacancy-bot-aws-0.0.1-SNAPSHOT.jar
+      Timeout: 300
+      MemorySize: 1024
+      SnapStart:
+        ApplyOn: PublishedVersions
+      AutoPublishAlias: live
+      Events:
+        ScanSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(2 hours)
+            Enabled: true
+
+Outputs:
+  WebhookUrl:
+    Description: Telegram webhook URL — register this with setWebhook
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook"
