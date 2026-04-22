@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hrbot-postgres
+    environment:
+      POSTGRES_DB: hrbot
+      POSTGRES_USER: hrbot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hrbot}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hrbot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: hrbot-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      BOT_USERNAME: ${BOT_USERNAME}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hrbot
+      SPRING_DATASOURCE_USERNAME: hrbot
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-hrbot}
+      # Override scan interval if needed: e.g. every hour
+      BOT_SCAN_CRON: ${BOT_SCAN_CRON:-0 0 */2 * * *}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,10 @@
+.git
+.claude
+.idea
+*.iml
+target/
+*.log
+*.md
+docker-compose.yml
+fly.toml
+.env
