@@ -110,6 +110,15 @@ Resources:
       SnapStart:
         ApplyOn: PublishedVersions
       AutoPublishAlias: live
+      Environment:
+        Variables:
+          SCANNER_FUNCTION_NAME: !GetAtt VacancyScannerFunction.Arn
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !GetAtt VacancyScannerFunction.Arn
       Events:
         WebhookApi:
           Type: HttpApi
