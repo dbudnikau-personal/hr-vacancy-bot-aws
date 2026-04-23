@@ -54,4 +54,4 @@ jobs:
               "BotToken=${{ secrets.BOT_TOKEN }}" \
               "SpringDatasourcePassword=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \
               "DeepSeekApiKey=${{ secrets.DEEPSEEK_API_KEY }}" \
-              "BotVersion=${{ github.sha }}"
+              "BotVersion=${GITHUB_SHA::7}"
