@@ -15,7 +15,7 @@ Globals:
         SPRING_DATASOURCE_PASSWORD: !Ref SpringDatasourcePassword
         BOT_TOKEN: !Ref BotToken
         DEEPSEEK_API_KEY: !Ref DeepSeekApiKey
-        BOT_VERSION: !Ref BotVersion
+        GIT_SHA: !Ref BotVersion
 
 Parameters:
   SpringDatasourceUrl:
