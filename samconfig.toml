@@ -6,7 +6,7 @@ resolve_s3 = true
 s3_prefix = "hr-vacancy-bot"
 region = "eu-central-1"
 confirm_changeset = true
-capabilities = "CAPABILITY_IAM"
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
 disable_rollback = true
 parameter_overrides = "SpringDatasourceUrl=\"jdbc:postgresql://ep-plain-leaf-al28oh21.c-3.eu-central-1.aws.neon.tech/neondb?sslmode=require\" SpringDatasourceUsername=\"neondb_owner\""
 image_repositories = []
