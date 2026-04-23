@@ -26,24 +26,29 @@ public class VacancyService {
 
     public ScanResult scanForFilter(VacancyFilter filter) {
         List<Vacancy> allFound = new ArrayList<>();
-
         for (String siteKey : filter.getSites()) {
             try {
                 SiteParser parser = parserRegistry.getParser(siteKey);
                 List<Vacancy> vacancies = parser.parse(filter);
                 List<Vacancy> relevant = filterByRelevance(vacancies, filter);
                 allFound.addAll(relevant);
-
                 log.info("Site [{}]: {} found, {} relevant after AI filter", siteKey, vacancies.size(), relevant.size());
                 statusRegistry.recordSuccess(siteKey, relevant.size());
-
             } catch (Exception e) {
                 log.error("Error parsing site [{}] for filter [{}]: {}", siteKey, filter.getName(), e.getMessage());
                 statusRegistry.recordError(siteKey, e.getMessage());
             }
         }
-
         return diffDetector.detectChanges(allFound);
+    }
+
+    public ScanResult scanSingleSite(VacancyFilter filter, String siteKey) {
+        SiteParser parser = parserRegistry.getParser(siteKey);
+        List<Vacancy> vacancies = parser.parse(filter);
+        List<Vacancy> relevant = filterByRelevance(vacancies, filter);
+        log.info("Site [{}]: {} found, {} relevant after AI filter", siteKey, vacancies.size(), relevant.size());
+        statusRegistry.recordSuccess(siteKey, relevant.size());
+        return diffDetector.detectChanges(relevant);
     }
 
     private List<Vacancy> filterByRelevance(List<Vacancy> vacancies, VacancyFilter filter) {
