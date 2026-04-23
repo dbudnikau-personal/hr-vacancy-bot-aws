@@ -31,7 +31,7 @@ public class DjinniParser implements SiteParser {
 
     private static final String PAGINATION_NEXT = "ul.pagination li.page-item:last-child a.page-link";
 
-    private static final int MAX_PAGES = 10;
+    private static final int MAX_PAGES = 3;
 
     @Override
     public String getSiteKey() { return "djinni"; }

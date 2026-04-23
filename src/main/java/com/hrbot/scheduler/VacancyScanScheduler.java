@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -43,5 +44,27 @@ public class VacancyScanScheduler {
         }
 
         log.info("Scan complete");
+    }
+
+    public void scanForChat(long chatId, List<Long> filterIds) {
+        List<VacancyFilter> filters = filterIds.isEmpty()
+                ? filterService.getActiveFiltersForChat(chatId)
+                : filterIds.stream()
+                        .map(filterService::findById)
+                        .filter(f -> f != null && f.isActive())
+                        .collect(Collectors.toList());
+
+        log.info("Manual scan for chatId={}: {} filter(s)", chatId, filters.size());
+
+        for (VacancyFilter filter : filters) {
+            try {
+                ScanResult result = vacancyService.scanForFilter(filter);
+                log.info("Filter [{}]: {} new, {} updated",
+                        filter.getName(), result.getNewVacancies().size(), result.getUpdatedVacancies().size());
+                notificationService.notify(filter, result);
+            } catch (Exception e) {
+                log.error("Scan failed for filter [{}]: {}", filter.getName(), e.getMessage());
+            }
+        }
     }
 }
