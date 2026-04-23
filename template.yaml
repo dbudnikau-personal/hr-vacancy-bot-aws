@@ -15,6 +15,7 @@ Globals:
         SPRING_DATASOURCE_PASSWORD: !Ref SpringDatasourcePassword
         BOT_TOKEN: !Ref BotToken
         DEEPSEEK_API_KEY: !Ref DeepSeekApiKey
+        BOT_VERSION: !Ref BotVersion
 
 Parameters:
   SpringDatasourceUrl:
@@ -35,8 +36,70 @@ Parameters:
     Type: String
     NoEcho: true
     Description: DeepSeek API key
+  BotVersion:
+    Type: String
+    Default: local
+    Description: Git commit SHA injected by CI
 
 Resources:
+  WebhookRegistrarRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: hr-vacancy-bot-webhook-registrar-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  WebhookRegistrarFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: hr-vacancy-bot-webhook-registrar
+      Runtime: python3.12
+      Architectures:
+        - arm64
+      Handler: index.handler
+      Timeout: 30
+      Role: !GetAtt WebhookRegistrarRole.Arn
+      Code:
+        ZipFile: |
+          import urllib.request
+          import json
+          import cfnresponse
+
+          def handler(event, context):
+              try:
+                  if event['RequestType'] == 'Delete':
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                      return
+
+                  bot_token = event['ResourceProperties']['BotToken']
+                  webhook_url = event['ResourceProperties']['WebhookUrl']
+
+                  url = f"https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}"
+                  with urllib.request.urlopen(url) as resp:
+                      body = json.loads(resp.read())
+
+                  if body.get('ok'):
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, {'Result': 'Webhook registered'})
+                  else:
+                      cfnresponse.send(event, context, cfnresponse.FAILED, {'Result': str(body)})
+              except Exception as e:
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
+  WebhookRegistration:
+    Type: AWS::CloudFormation::CustomResource
+    DependsOn: BotHandlerFunction
+    Properties:
+      ServiceToken: !GetAtt WebhookRegistrarFunction.Arn
+      BotToken: !Ref BotToken
+      WebhookUrl: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook"
+
   BotHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
