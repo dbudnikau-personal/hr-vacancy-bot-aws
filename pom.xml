@@ -7,7 +7,7 @@
 
     <groupId>com.hrbot</groupId>
     <artifactId>hr-vacancy-bot-aws</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
     <name>hr-vacancy-bot-aws</name>
     <description>HR Vacancy Bot — AWS Lambda edition</description>
@@ -25,6 +25,7 @@
         <flyway.version>10.22.0</flyway.version>
         <aws.lambda.java.version>1.4.0</aws.lambda.java.version>
         <aws.lambda.events.version>3.16.1</aws.lambda.events.version>
+        <aws.sdk.version>2.34.0</aws.sdk.version>
     </properties>
 
     <dependencies>
@@ -52,6 +53,24 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-events</artifactId>
             <version>${aws.lambda.events.version}</version>
+        </dependency>
+
+        <!-- AWS SDK v2 Lambda client (for async invocation of ScannerLambda) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>lambda</artifactId>
+            <version>${aws.sdk.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+            <version>${aws.sdk.version}</version>
         </dependency>
 
         <!-- Telegram client (for sending messages) -->

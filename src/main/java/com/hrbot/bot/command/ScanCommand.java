@@ -1,24 +1,22 @@
 package com.hrbot.bot.command;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrbot.bot.MessageSender;
-import com.hrbot.model.ScanResult;
 import com.hrbot.model.VacancyFilter;
 import com.hrbot.service.FilterService;
-import com.hrbot.service.NotificationService;
-import com.hrbot.service.VacancyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
-
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.lambda.model.InvocationType;
+import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 
 import java.util.List;
+import java.util.Map;
 
-/**
- * Usage:
- * /scan           — scan all active filters for this chat
- * /scan <id>      — scan specific filter by ID
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -26,18 +24,17 @@ public class ScanCommand implements BotCommand {
 
     private final MessageSender sender;
     private final FilterService filterService;
-    private final VacancyService vacancyService;
-    private final NotificationService notificationService;
+    private final LambdaClient lambdaClient;
+    private final ObjectMapper objectMapper;
+
+    @Value("${scanner.function.name}")
+    private String scannerFunctionName;
 
     @Override
-    public String getCommand() {
-        return "/scan";
-    }
+    public String getCommand() { return "/scan"; }
 
     @Override
-    public String getDescription() {
-        return "Trigger vacancy scan. Usage: /scan [filter_id]";
-    }
+    public String getDescription() { return "Trigger vacancy scan. Usage: /scan [filter_id]"; }
 
     @Override
     public void handle(Message message, String[] args) {
@@ -46,7 +43,6 @@ public class ScanCommand implements BotCommand {
         List<VacancyFilter> filters;
 
         if (args.length > 0) {
-            // Scan specific filter by ID
             try {
                 long filterId = Long.parseLong(args[0].trim());
                 VacancyFilter filter = filterService.findById(filterId);
@@ -55,20 +51,16 @@ public class ScanCommand implements BotCommand {
                     sender.sendText(chatId, "❌ Filter <code>%d</code> not found.".formatted(filterId));
                     return;
                 }
-
                 if (!filter.isActive()) {
                     sender.sendText(chatId, "⚠️ Filter <code>%d</code> is inactive.".formatted(filterId));
                     return;
                 }
-
                 filters = List.of(filter);
             } catch (NumberFormatException e) {
-                sender.sendText(chatId, "❌ Invalid filter ID: <code>%s</code>. Use /filters to see IDs."
-                        .formatted(args[0]));
+                sender.sendText(chatId, "❌ Invalid filter ID: <code>%s</code>. Use /filters to see IDs.".formatted(args[0]));
                 return;
             }
         } else {
-            // Scan all active filters for this chat
             filters = filterService.getActiveFiltersForChat(chatId);
         }
 
@@ -77,36 +69,22 @@ public class ScanCommand implements BotCommand {
             return;
         }
 
-        sender.sendText(chatId, "🔍 Scanning %d filter(s)...".formatted(filters.size()));
+        sender.sendText(chatId, "🔍 Scanning %d filter(s) in background...".formatted(filters.size()));
 
-        int totalNew = 0;
-        int totalUpdated = 0;
+        try {
+            List<Long> filterIds = filters.stream().map(VacancyFilter::getId).toList();
+            String payload = objectMapper.writeValueAsString(Map.of("chatId", chatId, "filterIds", filterIds));
 
-        for (VacancyFilter filter : filters) {
-            try {
-                sender.sendText(chatId, "⏳ <b>%s</b> [ID: <code>%d</code>] — sites: <code>%s</code>"
-                        .formatted(filter.getName(), filter.getId(),
-                                String.join(", ", filter.getSites())));
+            lambdaClient.invoke(InvokeRequest.builder()
+                    .functionName(scannerFunctionName)
+                    .invocationType(InvocationType.EVENT)
+                    .payload(SdkBytes.fromUtf8String(payload))
+                    .build());
 
-                ScanResult result = vacancyService.scanForFilter(filter);
-                notificationService.notify(filter, result);
-
-                totalNew += result.getNewVacancies().size();
-                totalUpdated += result.getUpdatedVacancies().size();
-
-                sender.sendText(chatId, "✔️ <b>%s</b>: %d new, %d updated"
-                        .formatted(filter.getName(),
-                                result.getNewVacancies().size(),
-                                result.getUpdatedVacancies().size()));
-
-            } catch (Exception e) {
-                log.error("Manual scan failed for filter [{}]: {}", filter.getName(), e.getMessage());
-                sender.sendText(chatId, "❌ Error scanning <code>%s</code>: %s"
-                        .formatted(filter.getName(), e.getMessage()));
-            }
+            log.info("Async scan triggered for chatId={}, filters={}", chatId, filterIds);
+        } catch (Exception e) {
+            log.error("Failed to trigger async scan: {}", e.getMessage(), e);
+            sender.sendText(chatId, "❌ Failed to start scan: " + e.getMessage());
         }
-
-        sender.sendText(chatId, "✅ Done: <b>%d new</b>, <b>%d updated</b>"
-                .formatted(totalNew, totalUpdated));
     }
 }
