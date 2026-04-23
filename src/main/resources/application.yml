@@ -16,7 +16,7 @@ spring:
 
 bot:
   token: ${BOT_TOKEN}
-  version: "@project.version@.${BOT_VERSION:local}"
+  version: "@project.version@.${GIT_SHA:local}"
 
 deepseek:
   api-key: ${DEEPSEEK_API_KEY}
