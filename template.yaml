@@ -4,7 +4,6 @@ Description: HR Vacancy Bot — AWS Lambda
 
 Globals:
   Function:
-    Runtime: java21
     MemorySize: 1024
     Environment:
       Variables:
@@ -104,6 +103,7 @@ Resources:
     Properties:
       FunctionName: hr-vacancy-bot-handler
       Handler: com.hrbot.lambda.BotHandlerLambda::handleRequest
+      Runtime: java21
       CodeUri: .
       Timeout: 60
       Architectures:
@@ -132,6 +132,7 @@ Resources:
     Properties:
       FunctionName: hr-vacancy-bot-scanner
       Handler: com.hrbot.lambda.ScannerLambda::handleRequest
+      Runtime: java21
       CodeUri: .
       Timeout: 300
       MemorySize: 1024
