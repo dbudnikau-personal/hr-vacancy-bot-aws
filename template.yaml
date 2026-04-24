@@ -16,8 +16,7 @@ Globals:
         BOT_TOKEN: !Ref BotToken
         DEEPSEEK_API_KEY: !Ref DeepSeekApiKey
         GIT_SHA: !Ref BotVersion
-        WELLFOUND_COOKIE_DATADOME: !Ref WellfoundCookieDatadome
-        WELLFOUND_COOKIE_CF_CLEARANCE: !Ref WellfoundCookieCfClearance
+        AWS_REGION: !Ref AWS::Region
 
 Parameters:
   SpringDatasourceUrl:
@@ -42,16 +41,6 @@ Parameters:
     Type: String
     Default: local
     Description: Git commit SHA injected by CI
-  WellfoundCookieDatadome:
-    Type: String
-    Default: ""
-    NoEcho: true
-    Description: Wellfound datadome session cookie (refresh when expired)
-  WellfoundCookieCfClearance:
-    Type: String
-    Default: ""
-    NoEcho: true
-    Description: Wellfound cf_clearance cookie (refresh when expired)
 
 Resources:
   WebhookRegistrarRole:
@@ -151,12 +140,54 @@ Resources:
       AutoPublishAlias: live
       EventInvokeConfig:
         MaximumRetryAttempts: 0
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Effect: Allow
+              Action: ssm:GetParameter
+              Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/wellfound/*"
+            - Effect: Allow
+              Action: kms:Decrypt
+              Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
       Events:
         ScanSchedule:
           Type: Schedule
           Properties:
             Schedule: rate(2 hours)
             Enabled: true
+
+  CookieRefresherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: hr-vacancy-bot-cookie-refresher
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Timeout: 120
+      MemorySize: 1024
+      EventInvokeConfig:
+        MaximumRetryAttempts: 0
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Effect: Allow
+              Action: ssm:PutParameter
+              Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/wellfound/*"
+            - Effect: Allow
+              Action:
+                - kms:GenerateDataKey
+                - kms:Decrypt
+              Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
+      Events:
+        RefreshSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(12 hours)
+            Enabled: true
+    Metadata:
+      DockerTag: cookie-refresher
+      DockerContext: ./cookie-refresher
+      Dockerfile: Dockerfile
 
 Outputs:
   WebhookUrl:
