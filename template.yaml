@@ -112,13 +112,13 @@ Resources:
       AutoPublishAlias: live
       Environment:
         Variables:
-          SCANNER_FUNCTION_NAME: !GetAtt VacancyScannerFunction.Arn
+          SCANNER_FUNCTION_NAME: !Sub "${VacancyScannerFunction.Arn}:live"
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
             - Effect: Allow
               Action: lambda:InvokeFunction
-              Resource: !GetAtt VacancyScannerFunction.Arn
+              Resource: !Sub "${VacancyScannerFunction.Arn}:live"
       Events:
         WebhookApi:
           Type: HttpApi
