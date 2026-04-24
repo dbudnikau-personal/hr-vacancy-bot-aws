@@ -41,12 +41,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
+      - uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build
         run: sam build
 
       - name: Deploy
         run: |
-          sam deploy --no-confirm-changeset \
+          sam deploy --no-confirm-changeset --resolve-image-repos \
             --parameter-overrides \
               "BotToken=${{ secrets.BOT_TOKEN }}" \
               "SpringDatasourcePassword=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \

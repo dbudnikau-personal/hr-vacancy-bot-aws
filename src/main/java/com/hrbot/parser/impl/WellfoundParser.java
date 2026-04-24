@@ -10,7 +10,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ssm.SsmClient;
+import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
+import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,21 +34,34 @@ public class WellfoundParser implements SiteParser {
     private static final String JOB_LINK        = "a[href*='/jobs/']";
     private static final String PAGINATION_NEXT = "a[aria-label='Next page']";
 
+    private static final String SSM_DATADOME    = "/hrbot/wellfound/datadome";
+    private static final String SSM_CF_CLEARANCE = "/hrbot/wellfound/cf-clearance";
+
     private static final int MAX_PAGES = 2;
 
-    @Value("${wellfound.cookie-datadome:}")
-    private String cookieDatadome;
+    @Value("${aws.region:eu-central-1}")
+    private String awsRegion;
 
-    @Value("${wellfound.cookie-cf-clearance:}")
-    private String cookieCfClearance;
+    private SsmClient ssmClient;
+
+    // In-memory cache — refreshed once per Lambda warm instance
+    private String cachedDatadome;
+    private String cachedCfClearance;
+
+    @PostConstruct
+    void init() {
+        ssmClient = SsmClient.builder()
+                .region(Region.of(awsRegion))
+                .httpClient(UrlConnectionHttpClient.create())
+                .build();
+    }
 
     @Override
     public String getSiteKey() { return "wellfound"; }
 
     @Override
     public List<Vacancy> parse(VacancyFilter filter) {
-        if (cookieDatadome.isBlank() || cookieCfClearance.isBlank()) {
-            log.warn("Wellfound cookies not configured (WELLFOUND_COOKIE_DATADOME / WELLFOUND_COOKIE_CF_CLEARANCE). Skipping.");
+        if (!loadCookies()) {
             return List.of();
         }
 
@@ -81,13 +100,40 @@ public class WellfoundParser implements SiteParser {
         return results;
     }
 
+    private boolean loadCookies() {
+        if (cachedDatadome != null && cachedCfClearance != null) {
+            return true;
+        }
+        try {
+            cachedDatadome    = getParam(SSM_DATADOME);
+            cachedCfClearance = getParam(SSM_CF_CLEARANCE);
+            log.info("Wellfound cookies loaded from SSM");
+            return true;
+        } catch (ParameterNotFoundException e) {
+            log.warn("Wellfound SSM cookies not found — run cookie-refresher Lambda first");
+            return false;
+        } catch (Exception e) {
+            log.error("Failed to load Wellfound cookies from SSM: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private String getParam(String name) {
+        return ssmClient.getParameter(GetParameterRequest.builder()
+                .name(name)
+                .withDecryption(true)
+                .build())
+                .parameter()
+                .value();
+    }
+
     private boolean isBlocked(Document doc) {
         String title = doc.title().toLowerCase();
         return title.contains("just a moment")
                 || title.contains("attention required")
                 || title.contains("access denied")
-                || doc.selectFirst(JOB_GROUP) == null && doc.selectFirst("title") != null
-                   && !doc.title().toLowerCase().contains("wellfound");
+                || (doc.selectFirst(JOB_GROUP) == null
+                    && !doc.title().toLowerCase().contains("wellfound"));
     }
 
     private String buildUrl(VacancyFilter filter) {
@@ -113,8 +159,8 @@ public class WellfoundParser implements SiteParser {
                 .header("Sec-Fetch-Site", "same-origin")
                 .header("Sec-Fetch-Mode", "navigate")
                 .header("Sec-Fetch-Dest", "document")
-                .cookie("datadome", cookieDatadome)
-                .cookie("cf_clearance", cookieCfClearance)
+                .cookie("datadome", cachedDatadome)
+                .cookie("cf_clearance", cachedCfClearance)
                 .cookie("_wellfound", "aed8f90b70f262fc4db13a6283910118.o")
                 .timeout(8_000)
                 .get();
@@ -127,8 +173,7 @@ public class WellfoundParser implements SiteParser {
 
         for (Element group : groups) {
             String company = extractCompany(group);
-            Elements jobLinks = group.select(JOB_LINK);
-            for (Element link : jobLinks) {
+            for (Element link : group.select(JOB_LINK)) {
                 try {
                     vacancies.add(parseJobLink(link, company));
                 } catch (Exception e) {
@@ -143,14 +188,9 @@ public class WellfoundParser implements SiteParser {
     private String extractCompany(Element group) {
         Element prev = group.previousElementSibling();
         if (prev == null) return "N/A";
-
         String text = prev.text();
         if (text.isBlank()) return "N/A";
-
-        return text.split("\n")[0]
-                .split("Actively")[0]
-                .split("Top")[0]
-                .trim();
+        return text.split("\n")[0].split("Actively")[0].split("Top")[0].trim();
     }
 
     private Vacancy parseJobLink(Element link, String company) {
@@ -171,12 +211,8 @@ public class WellfoundParser implements SiteParser {
     }
 
     private String extractSalary(Element link) {
-        Element row = link.parent();
-        if (row == null) return null;
-
-        Element container = row.parent();
+        Element container = link.parent() != null ? link.parent().parent() : null;
         if (container == null) return null;
-
         for (Element el : container.getAllElements()) {
             String text = el.ownText().trim();
             if (text.matches(".*\\$\\d+.*")) return text;
