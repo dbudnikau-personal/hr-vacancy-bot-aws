@@ -13,7 +13,6 @@ Globals:
         BOT_TOKEN: !Ref BotToken
         DEEPSEEK_API_KEY: !Ref DeepSeekApiKey
         GIT_SHA: !Ref BotVersion
-        AWS_REGION: !Ref AWS::Region
 
 Parameters:
   SpringDatasourceUrl:

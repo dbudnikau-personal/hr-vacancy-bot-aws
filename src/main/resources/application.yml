@@ -33,9 +33,6 @@ deepseek:
   base-url: https://api.deepseek.com
   model: deepseek-chat
 
-aws:
-  region: ${AWS_REGION:eu-central-1}
-
 logging:
   level:
     com.hrbot: INFO
