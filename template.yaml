@@ -137,6 +137,8 @@ Resources:
       SnapStart:
         ApplyOn: PublishedVersions
       AutoPublishAlias: live
+      EventInvokeConfig:
+        MaximumRetryAttempts: 0
       Events:
         ScanSchedule:
           Type: Schedule
