@@ -16,6 +16,8 @@ Globals:
         BOT_TOKEN: !Ref BotToken
         DEEPSEEK_API_KEY: !Ref DeepSeekApiKey
         GIT_SHA: !Ref BotVersion
+        WELLFOUND_COOKIE_DATADOME: !Ref WellfoundCookieDatadome
+        WELLFOUND_COOKIE_CF_CLEARANCE: !Ref WellfoundCookieCfClearance
 
 Parameters:
   SpringDatasourceUrl:
@@ -40,6 +42,16 @@ Parameters:
     Type: String
     Default: local
     Description: Git commit SHA injected by CI
+  WellfoundCookieDatadome:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Wellfound datadome session cookie (refresh when expired)
+  WellfoundCookieCfClearance:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Wellfound cf_clearance cookie (refresh when expired)
 
 Resources:
   WebhookRegistrarRole:
