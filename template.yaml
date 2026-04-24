@@ -6,8 +6,6 @@ Globals:
   Function:
     Runtime: java21
     MemorySize: 1024
-    Architectures:
-      - arm64
     Environment:
       Variables:
         SPRING_DATASOURCE_URL: !Ref SpringDatasourceUrl
@@ -108,6 +106,8 @@ Resources:
       Handler: com.hrbot.lambda.BotHandlerLambda::handleRequest
       CodeUri: .
       Timeout: 60
+      Architectures:
+        - arm64
       SnapStart:
         ApplyOn: PublishedVersions
       AutoPublishAlias: live
@@ -135,6 +135,8 @@ Resources:
       CodeUri: .
       Timeout: 300
       MemorySize: 1024
+      Architectures:
+        - arm64
       SnapStart:
         ApplyOn: PublishedVersions
       AutoPublishAlias: live
