@@ -33,6 +33,10 @@ deepseek:
   base-url: https://api.deepseek.com
   model: deepseek-chat
 
+wellfound:
+  cookie-datadome: ${WELLFOUND_COOKIE_DATADOME:}
+  cookie-cf-clearance: ${WELLFOUND_COOKIE_CF_CLEARANCE:}
+
 logging:
   level:
     com.hrbot: INFO
