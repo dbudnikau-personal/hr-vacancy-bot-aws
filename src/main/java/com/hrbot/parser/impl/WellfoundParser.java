@@ -8,9 +8,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
@@ -39,9 +37,6 @@ public class WellfoundParser implements SiteParser {
 
     private static final int MAX_PAGES = 2;
 
-    @Value("${aws.region:eu-central-1}")
-    private String awsRegion;
-
     private SsmClient ssmClient;
 
     // In-memory cache — refreshed once per Lambda warm instance
@@ -50,8 +45,8 @@ public class WellfoundParser implements SiteParser {
 
     @PostConstruct
     void init() {
+        // Region is auto-detected from AWS_REGION env var (set by Lambda runtime)
         ssmClient = SsmClient.builder()
-                .region(Region.of(awsRegion))
                 .httpClient(UrlConnectionHttpClient.create())
                 .build();
     }
