@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface VacancyRepository extends JpaRepository<Vacancy, Long> {
@@ -17,8 +18,9 @@ public interface VacancyRepository extends JpaRepository<Vacancy, Long> {
     Page<Vacancy> findByTitleContainingIgnoreCaseOrCompanyContainingIgnoreCase(
             String title, String company, Pageable pageable);
 
-    // Filter by siteKey for now — later can be extended to filter by chatId/filterId
     Page<Vacancy> findBySiteKey(String siteKey, Pageable pageable);
+
+    List<Vacancy> findBySiteKeyOrderByFoundAtDesc(String siteKey);
 
     @Query("SELECT v FROM Vacancy v WHERE " +
             "(:keyword IS NULL OR LOWER(v.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +

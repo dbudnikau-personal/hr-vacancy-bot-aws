@@ -17,6 +17,10 @@ public class ScannerLambda implements RequestHandler<Map<String, Object>, Void> 
         this.scanner = LambdaContextHolder.getBean(VacancyScanScheduler.class);
     }
 
+    public ScannerLambda(VacancyScanScheduler scanner) {
+        this.scanner = scanner;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public Void handleRequest(Map<String, Object> event, Context context) {
