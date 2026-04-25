@@ -94,6 +94,11 @@ BOT_SCAN_CRON=0 0 */2 * * *
 | `/addfilter <name> <keywords> [location] [salaryMin] [sites]` | Add vacancy filter |
 | `/filters` | List active filters |
 | `/removefilter <id>` | Deactivate filter by ID |
+| `/vacancies` | Browse all saved vacancies with inline Prev/Next pagination |
+| `/vacancies <keyword>` | Search vacancies by keyword in title or company |
+| `/scan` | Trigger manual scan for all active filters |
+| `/scan <filter_id>` | Trigger manual scan for a specific filter |
+| `/status` | Show parser health status |
 | `/help` | Show available commands |
 
 ### Filter Examples
