@@ -24,6 +24,10 @@ bot:
   token: ${BOT_TOKEN}
   version: "@project.version@.${GIT_SHA:local}"
 
+admin:
+  chat:
+    id: ${ADMIN_CHAT_ID:0}
+
 scanner:
   function:
     name: ${SCANNER_FUNCTION_NAME:hr-vacancy-bot-scanner}
