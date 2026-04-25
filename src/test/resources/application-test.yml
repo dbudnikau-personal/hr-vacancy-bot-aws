@@ -15,3 +15,8 @@ deepseek:
   api-key: test-key
   base-url: http://localhost:19999
   model: test-model
+
+cookie:
+  refresher:
+    function:
+      name: test-cookie-refresher
