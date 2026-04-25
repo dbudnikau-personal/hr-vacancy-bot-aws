@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,22 +28,37 @@ public class VacancyScanScheduler {
     private final NotificationService notificationService;
     private final MessageSender messageSender;
 
+    private record SiteScanTask(VacancyFilter filter, String siteKey, CompletableFuture<ScanResult> future) {}
+
     @Scheduled(cron = "${bot.scan.cron:0 0 */2 * * *}")
     public void scan() {
         List<VacancyFilter> filters = filterService.getAllActiveFilters();
         log.info("Starting vacancy scan for {} active filters", filters.size());
 
+        List<SiteScanTask> tasks = new ArrayList<>();
+        for (VacancyFilter filter : filters) {
+            for (String siteKey : filter.getSites()) {
+                tasks.add(new SiteScanTask(filter, siteKey, vacancyService.scanSingleSiteAsync(filter, siteKey)));
+            }
+        }
+
+        CompletableFuture.allOf(tasks.stream().map(SiteScanTask::future).toArray(CompletableFuture[]::new)).join();
+
         Map<Long, int[]> chatTotals = new LinkedHashMap<>();
         Map<Long, List<String>> chatFilterLines = new LinkedHashMap<>();
 
-        for (VacancyFilter filter : filters) {
+        Map<Long, List<SiteScanTask>> tasksByFilter = tasks.stream()
+                .collect(Collectors.groupingBy(t -> t.filter().getId(), LinkedHashMap::new, Collectors.toList()));
+
+        for (List<SiteScanTask> filterTasks : tasksByFilter.values()) {
+            VacancyFilter filter = filterTasks.get(0).filter();
             long chatId = filter.getChatId();
             int filterFound = 0, filterNew = 0, filterUpdated = 0;
             List<String> siteParts = new ArrayList<>();
 
-            for (String siteKey : filter.getSites()) {
+            for (SiteScanTask task : filterTasks) {
                 try {
-                    ScanResult result = vacancyService.scanSingleSite(filter, siteKey);
+                    ScanResult result = task.future().join();
                     int f = result.getTotalFound();
                     int n = result.getNewVacancies().size();
                     int u = result.getUpdatedVacancies().size();
@@ -50,11 +66,12 @@ public class VacancyScanScheduler {
                     filterNew += n;
                     filterUpdated += u;
                     notificationService.notify(filter, result);
-                    siteParts.add("<code>%s</code> %d→%d🆕%d🔄".formatted(siteKey, f, n, u));
-                    log.info("Filter [{}] site [{}]: {} found, {} new, {} updated", filter.getName(), siteKey, f, n, u);
+                    siteParts.add("<code>%s</code> %d→%d🆕%d🔄".formatted(task.siteKey(), f, n, u));
+                    log.info("Filter [{}] site [{}]: {} found, {} new, {} updated", filter.getName(), task.siteKey(), f, n, u);
                 } catch (Exception e) {
-                    log.error("Scan failed for filter [{}] site [{}]: {}", filter.getName(), siteKey, e.getMessage());
-                    siteParts.add("<code>%s</code> ❌".formatted(siteKey));
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    log.error("Scan failed for filter [{}] site [{}]: {}", filter.getName(), task.siteKey(), cause.getMessage());
+                    siteParts.add("<code>%s</code> ❌".formatted(task.siteKey()));
                 }
             }
 
