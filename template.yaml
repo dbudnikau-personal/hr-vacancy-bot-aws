@@ -37,6 +37,10 @@ Parameters:
     Type: String
     Default: local
     Description: Git commit SHA injected by CI
+  AdminChatId:
+    Type: String
+    Default: "0"
+    Description: Telegram chat ID to notify on deployment
 
 Resources:
   WebhookRegistrarRole:
@@ -113,6 +117,7 @@ Resources:
       Environment:
         Variables:
           SCANNER_FUNCTION_NAME: !Sub "${VacancyScannerFunction.Arn}:live"
+          ADMIN_CHAT_ID: !Ref AdminChatId
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
