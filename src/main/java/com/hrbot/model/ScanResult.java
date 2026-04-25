@@ -8,6 +8,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ScanResult {
+    private int totalFound;
     private List<Vacancy> newVacancies;
     private List<Vacancy> updatedVacancies;
 }
