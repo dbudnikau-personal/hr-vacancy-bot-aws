@@ -23,6 +23,12 @@ public class BotHandlerLambda implements RequestHandler<APIGatewayV2HTTPEvent, A
         this.objectMapper = LambdaContextHolder.getBean(ObjectMapper.class);
     }
 
+    public BotHandlerLambda(CommandRouter commandRouter, CallbackRouter callbackRouter, ObjectMapper objectMapper) {
+        this.commandRouter = commandRouter;
+        this.callbackRouter = callbackRouter;
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
         try {
