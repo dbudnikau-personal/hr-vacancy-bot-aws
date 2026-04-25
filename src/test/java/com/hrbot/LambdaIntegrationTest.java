@@ -25,6 +25,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
@@ -38,10 +39,16 @@ class LambdaIntegrationTest {
         PostgreSQLContainer<?> postgres() {
             return new PostgreSQLContainer<>("postgres:16-alpine");
         }
+
+        // Provide mock here so AppConfig.lambdaClient() is never called
+        // (AWS SDK would fail without a configured region in CI)
+        @Bean
+        LambdaClient lambdaClient() {
+            return mock(LambdaClient.class);
+        }
     }
 
     @MockitoBean MessageSender messageSender;
-    @MockitoBean LambdaClient lambdaClient;
 
     @Autowired CommandRouter commandRouter;
     @Autowired CallbackRouter callbackRouter;
