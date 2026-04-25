@@ -32,10 +32,8 @@ public class HelpCommand implements BotCommand {
                   <i>Deactivate filter by ID</i>
 
                 <b>Search:</b>
-                • <code>/vacancies</code> — all vacancies from DB
+                • <code>/vacancies</code> — browse all vacancies (inline Prev/Next)
                 • <code>/vacancies &lt;keyword&gt;</code> — search by keyword
-                • <code>/vacancies &lt;filter_id&gt;</code> — by filter ID
-                • <code>/vacancies page &lt;N&gt;</code> — pagination
 
                 <b>Control:</b>
                 • <code>/scan</code> — scan all active filters
@@ -49,7 +47,7 @@ public class HelpCommand implements BotCommand {
                 <b>Examples:</b>
                 <code>/addfilter java-remote "Java Spring" "" 3000 djinni,hh,getmatch</code>
                 <code>/scan 1</code>
-                <code>/vacancies java page 2</code>
+                <code>/vacancies java</code>
                 """);
     }
 }
