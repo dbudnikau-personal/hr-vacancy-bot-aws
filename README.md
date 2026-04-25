@@ -96,6 +96,7 @@ BOT_SCAN_CRON=0 0 */2 * * *
 | `/removefilter <id>` | Deactivate filter by ID |
 | `/vacancies` | Browse all saved vacancies with inline Prev/Next pagination |
 | `/vacancies <keyword>` | Search vacancies by keyword in title or company |
+| `/report <site>` | Export all saved vacancies for a site to CSV (e.g. `/report hh`) |
 | `/scan` | Trigger manual scan for all active filters |
 | `/scan <filter_id>` | Trigger manual scan for a specific filter |
 | `/status` | Show parser health status |

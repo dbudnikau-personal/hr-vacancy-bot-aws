@@ -34,6 +34,7 @@ public class HelpCommand implements BotCommand {
                 <b>Search:</b>
                 • <code>/vacancies</code> — browse all vacancies (inline Prev/Next)
                 • <code>/vacancies &lt;keyword&gt;</code> — search by keyword
+                • <code>/report &lt;site&gt;</code> — export vacancies to CSV
 
                 <b>Control:</b>
                 • <code>/scan</code> — scan all active filters

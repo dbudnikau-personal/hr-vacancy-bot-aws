@@ -45,10 +45,13 @@ public class WellfoundParser implements SiteParser {
 
     @PostConstruct
     void init() {
-        // Region is auto-detected from AWS_REGION env var (set by Lambda runtime)
-        ssmClient = SsmClient.builder()
-                .httpClient(UrlConnectionHttpClient.create())
-                .build();
+        try {
+            ssmClient = SsmClient.builder()
+                    .httpClient(UrlConnectionHttpClient.create())
+                    .build();
+        } catch (Exception e) {
+            log.warn("WellfoundParser: failed to create SSM client ({}), parser disabled", e.getMessage());
+        }
     }
 
     @Override
@@ -96,6 +99,10 @@ public class WellfoundParser implements SiteParser {
     }
 
     private boolean loadCookies() {
+        if (ssmClient == null) {
+            log.warn("WellfoundParser: SSM client unavailable, skipping");
+            return false;
+        }
         if (cachedDatadome != null && cachedCfClearance != null) {
             return true;
         }
