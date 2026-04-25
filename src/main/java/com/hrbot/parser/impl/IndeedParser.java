@@ -38,7 +38,11 @@ public class IndeedParser implements SiteParser {
                 Document doc = fetchFeed(url);
                 Elements items = doc.select("item");
 
-                if (items.isEmpty()) break;
+                if (items.isEmpty()) {
+                    log.warn("Indeed: 0 items on page {}, doc title='{}', body snippet='{}'",
+                            page, doc.title(), doc.text().substring(0, Math.min(200, doc.text().length())));
+                    break;
+                }
 
                 for (Element item : items) {
                     try {
