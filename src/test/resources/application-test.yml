@@ -1,0 +1,22 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+bot:
+  token: test-token
+  scan:
+    cron: "0 0 0 29 2 ?"   # Feb 29 — never fires in tests
+
+scanner:
+  function:
+    name: test-scanner-function
+
+deepseek:
+  api-key: test-key
+  base-url: http://localhost:19999
+  model: test-model
+
+cookie:
+  refresher:
+    function:
+      name: test-cookie-refresher

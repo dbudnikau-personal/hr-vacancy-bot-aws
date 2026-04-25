@@ -8,11 +8,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.lambda.model.InvocationType;
+import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -32,23 +37,31 @@ public class WellfoundParser implements SiteParser {
     private static final String JOB_LINK        = "a[href*='/jobs/']";
     private static final String PAGINATION_NEXT = "a[aria-label='Next page']";
 
-    private static final String SSM_DATADOME    = "/hrbot/wellfound/datadome";
+    private static final String SSM_DATADOME     = "/hrbot/wellfound/datadome";
     private static final String SSM_CF_CLEARANCE = "/hrbot/wellfound/cf-clearance";
 
     private static final int MAX_PAGES = 2;
 
+    private final LambdaClient lambdaClient;
+
+    @Value("${cookie.refresher.function.name:hr-vacancy-bot-cookie-refresher}")
+    private String cookieRefresherFunctionName;
+
     private SsmClient ssmClient;
 
-    // In-memory cache — refreshed once per Lambda warm instance
-    private String cachedDatadome;
-    private String cachedCfClearance;
+    public WellfoundParser(LambdaClient lambdaClient) {
+        this.lambdaClient = lambdaClient;
+    }
 
     @PostConstruct
     void init() {
-        // Region is auto-detected from AWS_REGION env var (set by Lambda runtime)
-        ssmClient = SsmClient.builder()
-                .httpClient(UrlConnectionHttpClient.create())
-                .build();
+        try {
+            ssmClient = SsmClient.builder()
+                    .httpClient(UrlConnectionHttpClient.create())
+                    .build();
+        } catch (Exception e) {
+            log.warn("WellfoundParser: failed to create SSM client ({}), parser disabled", e.getMessage());
+        }
     }
 
     @Override
@@ -56,6 +69,7 @@ public class WellfoundParser implements SiteParser {
 
     @Override
     public List<Vacancy> parse(VacancyFilter filter) {
+        refreshCookies();
         if (!loadCookies()) {
             return List.of();
         }
@@ -95,23 +109,44 @@ public class WellfoundParser implements SiteParser {
         return results;
     }
 
+    private void refreshCookies() {
+        try {
+            log.info("Wellfound: invoking cookie-refresher '{}'", cookieRefresherFunctionName);
+            lambdaClient.invoke(InvokeRequest.builder()
+                    .functionName(cookieRefresherFunctionName)
+                    .invocationType(InvocationType.REQUEST_RESPONSE)
+                    .payload(SdkBytes.fromUtf8String("{}"))
+                    .build());
+            log.info("Wellfound: cookie-refresher completed");
+        } catch (Exception e) {
+            log.warn("Wellfound: cookie-refresher invocation failed ({}), will try existing cookies", e.getMessage());
+        }
+    }
+
     private boolean loadCookies() {
-        if (cachedDatadome != null && cachedCfClearance != null) {
-            return true;
+        if (ssmClient == null) {
+            log.warn("WellfoundParser: SSM client unavailable, skipping");
+            return false;
         }
         try {
-            cachedDatadome    = getParam(SSM_DATADOME);
-            cachedCfClearance = getParam(SSM_CF_CLEARANCE);
+            String datadome    = getParam(SSM_DATADOME);
+            String cfClearance = getParam(SSM_CF_CLEARANCE);
             log.info("Wellfound cookies loaded from SSM");
+            // store for use in fetchPage
+            this.cachedDatadome    = datadome;
+            this.cachedCfClearance = cfClearance;
             return true;
         } catch (ParameterNotFoundException e) {
-            log.warn("Wellfound SSM cookies not found — run cookie-refresher Lambda first");
+            log.warn("Wellfound SSM cookies not found — cookie-refresher may have failed");
             return false;
         } catch (Exception e) {
             log.error("Failed to load Wellfound cookies from SSM: {}", e.getMessage());
             return false;
         }
     }
+
+    private String cachedDatadome;
+    private String cachedCfClearance;
 
     private String getParam(String name) {
         return ssmClient.getParameter(GetParameterRequest.builder()
