@@ -7,7 +7,7 @@
 
     <groupId>com.hrbot</groupId>
     <artifactId>hr-vacancy-bot-aws</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <packaging>jar</packaging>
     <name>hr-vacancy-bot-aws</name>
     <description>HR Vacancy Bot — AWS Lambda edition</description>
