@@ -142,6 +142,9 @@ Resources:
       AutoPublishAlias: live
       EventInvokeConfig:
         MaximumRetryAttempts: 0
+      Environment:
+        Variables:
+          COOKIE_REFRESHER_FUNCTION_NAME: !GetAtt CookieRefresherFunction.Arn
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
@@ -151,6 +154,9 @@ Resources:
             - Effect: Allow
               Action: kms:Decrypt
               Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
+            - Effect: Allow
+              Action: lambda:InvokeFunction
+              Resource: !GetAtt CookieRefresherFunction.Arn
       Events:
         ScanSchedule:
           Type: Schedule
@@ -180,12 +186,6 @@ Resources:
                 - kms:GenerateDataKey
                 - kms:Decrypt
               Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
-      Events:
-        RefreshSchedule:
-          Type: Schedule
-          Properties:
-            Schedule: rate(12 hours)
-            Enabled: true
     Metadata:
       DockerTag: cookie-refresher
       DockerContext: ./cookie-refresher
