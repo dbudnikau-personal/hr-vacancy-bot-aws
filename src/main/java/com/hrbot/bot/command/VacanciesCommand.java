@@ -1,6 +1,7 @@
 package com.hrbot.bot.command;
 
 import com.hrbot.bot.MessageSender;
+import com.hrbot.bot.callback.CallbackHandler;
 import com.hrbot.model.Vacancy;
 import com.hrbot.repository.VacancyRepository;
 import lombok.RequiredArgsConstructor;
@@ -8,23 +9,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
-
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Usage:
- *   /vacancies              — last 10 vacancies across all filters
- *   /vacancies <filter_id>  — last 10 vacancies for specific filter
- *   /vacancies <keyword>    — search by keyword in title or company
- *   /vacancies page <N>     — pagination
- */
 @Component
 @RequiredArgsConstructor
-public class VacanciesCommand implements BotCommand {
+public class VacanciesCommand implements BotCommand, CallbackHandler {
 
     private static final int PAGE_SIZE = 5;
+    private static final String PREFIX = "vac";
 
     private final MessageSender sender;
     private final VacancyRepository vacancyRepository;
@@ -33,71 +32,51 @@ public class VacanciesCommand implements BotCommand {
     public String getCommand() { return "/vacancies"; }
 
     @Override
-    public String getDescription() { return "Browse vacancies from DB. Usage: /vacancies [filter_id|keyword] [page N]"; }
+    public String getPrefix() { return PREFIX; }
+
+    @Override
+    public String getDescription() { return "Browse vacancies from DB. Usage: /vacancies [keyword]"; }
 
     @Override
     public void handle(Message message, String[] args) {
-        long chatId = message.getChatId();
+        String keyword = args.length > 0 ? args[0] : null;
+        showPage(message.getChatId(), null, 0, keyword);
+    }
 
-        // Parse args
-        String keyword = null;
-        Long filterId = null;
-        int page = 0;
+    @Override
+    public void handle(CallbackQuery callbackQuery, String data) {
+        // data format: "vac:PAGE" or "vac:PAGE:kw:KEYWORD"
+        String[] parts = data.split(":", 4);
+        int page = Integer.parseInt(parts[1]);
+        String keyword = parts.length == 4 && "kw".equals(parts[2]) ? parts[3] : null;
 
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase("page") && i + 1 < args.length) {
-                try {
-                    page = Math.max(0, Integer.parseInt(args[i + 1]) - 1);
-                } catch (NumberFormatException ignored) {}
-                i++; // skip next
-            } else {
-                try {
-                    filterId = Long.parseLong(args[i]);
-                } catch (NumberFormatException e) {
-                    keyword = args[i];
-                }
-            }
-        }
+        long chatId = callbackQuery.getMessage().getChatId();
+        int messageId = callbackQuery.getMessage().getMessageId();
+        sender.answerCallback(callbackQuery.getId());
+        showPage(chatId, messageId, page, keyword);
+    }
 
-        // Query
-        List<Vacancy> vacancies;
-        long total;
-        String context;
+    private void showPage(long chatId, Integer messageId, int page, String keyword) {
+        PageRequest pageRequest = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "foundAt"));
 
-        PageRequest pageRequest = PageRequest.of(page, PAGE_SIZE,
-                Sort.by(Sort.Direction.DESC, "foundAt"));
+        Page<Vacancy> result = keyword != null
+                ? vacancyRepository.findByTitleContainingIgnoreCaseOrCompanyContainingIgnoreCase(keyword, keyword, pageRequest)
+                : vacancyRepository.findAll(pageRequest);
 
-        if (keyword != null) {
-            String kw = keyword;
-            Page<Vacancy> result = vacancyRepository.findByTitleContainingIgnoreCaseOrCompanyContainingIgnoreCase(
-                    kw, kw, pageRequest);
-            vacancies = result.getContent();
-            total = result.getTotalElements();
-            context = "🔍 keyword: <code>" + escape(kw) + "</code>";
-        } else if (filterId != null) {
-            Page<Vacancy> result = vacancyRepository.findBySiteKey(filterId.toString(), pageRequest);
-            vacancies = result.getContent();
-            total = result.getTotalElements();
-            context = "🔖 filter ID: <code>" + filterId + "</code>";
-        } else {
-            Page<Vacancy> result = vacancyRepository.findAll(pageRequest);
-            vacancies = result.getContent();
-            total = result.getTotalElements();
-            context = "📋 all vacancies";
-        }
-
-        if (vacancies.isEmpty()) {
+        if (result.isEmpty()) {
             sender.sendText(chatId, "📭 No vacancies found.");
             return;
         }
 
-        // Build response
-        int totalPages = (int) Math.ceil((double) total / PAGE_SIZE);
-        StringBuilder sb = new StringBuilder();
-        sb.append("💼 <b>Vacancies</b> (%s) — page %d/%d\n\n"
-                .formatted(context, page + 1, totalPages));
+        int totalPages = result.getTotalPages();
+        long total = result.getTotalElements();
+        String context = keyword != null ? "🔍 <code>" + escape(keyword) + "</code>" : "📋 all";
 
-        for (Vacancy v : vacancies) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("💼 <b>Vacancies</b> (%s) — page %d/%d, total: %d\n\n"
+                .formatted(context, page + 1, totalPages, total));
+
+        for (Vacancy v : result.getContent()) {
             sb.append("▪️ <a href=\"%s\">%s</a>\n".formatted(v.getUrl(), escape(v.getTitle())));
             sb.append("   🏢 %s".formatted(escape(v.getCompany())));
             if (v.getSalary() != null) sb.append(" · 💰 %s".formatted(escape(v.getSalary())));
@@ -106,18 +85,37 @@ public class VacanciesCommand implements BotCommand {
             sb.append("\n\n");
         }
 
-        // Pagination hint
-        if (totalPages > 1) {
-            sb.append("📄 Page %d of %d · Total: %d\n".formatted(page + 1, totalPages, total));
-            if (page + 1 < totalPages) {
-                sb.append("➡️ Next: <code>/vacancies");
-                if (keyword != null) sb.append(" ").append(keyword);
-                if (filterId != null) sb.append(" ").append(filterId);
-                sb.append(" page %d</code>".formatted(page + 2));
-            }
+        InlineKeyboardMarkup keyboard = buildKeyboard(page, totalPages, keyword);
+
+        if (messageId != null) {
+            sender.editMessage(chatId, messageId, sb.toString(), keyboard);
+        } else {
+            sender.sendWithKeyboard(chatId, sb.toString(), keyboard);
+        }
+    }
+
+    private InlineKeyboardMarkup buildKeyboard(int page, int totalPages, String keyword) {
+        String base = PREFIX + ":" + "%d" + (keyword != null ? ":kw:" + keyword : "");
+        List<InlineKeyboardButton> buttons = new ArrayList<>();
+
+        if (page > 0) {
+            buttons.add(InlineKeyboardButton.builder()
+                    .text("◀ Prev")
+                    .callbackData(base.formatted(page - 1))
+                    .build());
+        }
+        buttons.add(InlineKeyboardButton.builder()
+                .text((page + 1) + "/" + totalPages)
+                .callbackData("noop")
+                .build());
+        if (page + 1 < totalPages) {
+            buttons.add(InlineKeyboardButton.builder()
+                    .text("Next ▶")
+                    .callbackData(base.formatted(page + 1))
+                    .build());
         }
 
-        sender.sendText(chatId, sb.toString());
+        return new InlineKeyboardMarkup(List.of(new InlineKeyboardRow(buttons)));
     }
 
     private String escape(String text) {
