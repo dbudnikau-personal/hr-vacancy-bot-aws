@@ -39,7 +39,9 @@ public class VacancyService {
                 statusRegistry.recordError(siteKey, e.getMessage());
             }
         }
-        return diffDetector.detectChanges(allFound);
+        ScanResult result = diffDetector.detectChanges(allFound);
+        result.setTotalFound(allFound.size());
+        return result;
     }
 
     public ScanResult scanSingleSite(VacancyFilter filter, String siteKey) {
@@ -48,7 +50,9 @@ public class VacancyService {
         List<Vacancy> relevant = filterByRelevance(vacancies, filter);
         log.info("Site [{}]: {} found, {} relevant after AI filter", siteKey, vacancies.size(), relevant.size());
         statusRegistry.recordSuccess(siteKey, relevant.size());
-        return diffDetector.detectChanges(relevant);
+        ScanResult result = diffDetector.detectChanges(relevant);
+        result.setTotalFound(relevant.size());
+        return result;
     }
 
     private List<Vacancy> filterByRelevance(List<Vacancy> vacancies, VacancyFilter filter) {
