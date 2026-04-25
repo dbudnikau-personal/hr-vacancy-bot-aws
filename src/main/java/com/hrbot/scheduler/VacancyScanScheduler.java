@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,33 +32,47 @@ public class VacancyScanScheduler {
         List<VacancyFilter> filters = filterService.getAllActiveFilters();
         log.info("Starting vacancy scan for {} active filters", filters.size());
 
-        Map<Long, int[]> chatTotals = new java.util.LinkedHashMap<>();
+        Map<Long, int[]> chatTotals = new LinkedHashMap<>();
+        Map<Long, List<String>> chatFilterLines = new LinkedHashMap<>();
 
         for (VacancyFilter filter : filters) {
-            try {
-                ScanResult result = vacancyService.scanForFilter(filter);
+            long chatId = filter.getChatId();
+            int filterFound = 0, filterNew = 0, filterUpdated = 0;
+            List<String> siteParts = new ArrayList<>();
 
-                log.info("Filter [{}]: {} found, {} new, {} updated",
-                        filter.getName(),
-                        result.getTotalFound(),
-                        result.getNewVacancies().size(),
-                        result.getUpdatedVacancies().size());
-
-                notificationService.notify(filter, result);
-
-                int[] totals = chatTotals.computeIfAbsent(filter.getChatId(), k -> new int[3]);
-                totals[0] += result.getTotalFound();
-                totals[1] += result.getNewVacancies().size();
-                totals[2] += result.getUpdatedVacancies().size();
-
-            } catch (Exception e) {
-                log.error("Scan failed for filter [{}]: {}", filter.getName(), e.getMessage());
+            for (String siteKey : filter.getSites()) {
+                try {
+                    ScanResult result = vacancyService.scanSingleSite(filter, siteKey);
+                    int f = result.getTotalFound();
+                    int n = result.getNewVacancies().size();
+                    int u = result.getUpdatedVacancies().size();
+                    filterFound += f;
+                    filterNew += n;
+                    filterUpdated += u;
+                    notificationService.notify(filter, result);
+                    siteParts.add("<code>%s</code> %d→%d🆕%d🔄".formatted(siteKey, f, n, u));
+                    log.info("Filter [{}] site [{}]: {} found, {} new, {} updated", filter.getName(), siteKey, f, n, u);
+                } catch (Exception e) {
+                    log.error("Scan failed for filter [{}] site [{}]: {}", filter.getName(), siteKey, e.getMessage());
+                    siteParts.add("<code>%s</code> ❌".formatted(siteKey));
+                }
             }
+
+            chatFilterLines.computeIfAbsent(chatId, k -> new ArrayList<>())
+                    .add("• <b>%s</b>: %s".formatted(filter.getName(), String.join(" · ", siteParts)));
+
+            int[] totals = chatTotals.computeIfAbsent(chatId, k -> new int[3]);
+            totals[0] += filterFound;
+            totals[1] += filterNew;
+            totals[2] += filterUpdated;
         }
 
-        chatTotals.forEach((chatId, totals) ->
-                messageSender.sendText(chatId, "✅ Scan complete: <b>%d found</b>, %d new, %d updated"
-                        .formatted(totals[0], totals[1], totals[2])));
+        chatTotals.forEach((chatId, totals) -> {
+            String header = "✅ Scan complete: <b>%d found</b>, %d new, %d updated"
+                    .formatted(totals[0], totals[1], totals[2]);
+            String details = String.join("\n", chatFilterLines.getOrDefault(chatId, List.of()));
+            messageSender.sendText(chatId, header + "\n\n" + details);
+        });
 
         log.info("Scan complete");
     }
