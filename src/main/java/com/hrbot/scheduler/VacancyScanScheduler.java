@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,21 +30,33 @@ public class VacancyScanScheduler {
         List<VacancyFilter> filters = filterService.getAllActiveFilters();
         log.info("Starting vacancy scan for {} active filters", filters.size());
 
+        Map<Long, int[]> chatTotals = new java.util.LinkedHashMap<>();
+
         for (VacancyFilter filter : filters) {
             try {
                 ScanResult result = vacancyService.scanForFilter(filter);
 
-                log.info("Filter [{}]: {} new, {} updated",
+                log.info("Filter [{}]: {} found, {} new, {} updated",
                         filter.getName(),
+                        result.getTotalFound(),
                         result.getNewVacancies().size(),
                         result.getUpdatedVacancies().size());
 
                 notificationService.notify(filter, result);
 
+                int[] totals = chatTotals.computeIfAbsent(filter.getChatId(), k -> new int[3]);
+                totals[0] += result.getTotalFound();
+                totals[1] += result.getNewVacancies().size();
+                totals[2] += result.getUpdatedVacancies().size();
+
             } catch (Exception e) {
                 log.error("Scan failed for filter [{}]: {}", filter.getName(), e.getMessage());
             }
         }
+
+        chatTotals.forEach((chatId, totals) ->
+                messageSender.sendText(chatId, "✅ Scan complete: <b>%d found</b>, %d new, %d updated"
+                        .formatted(totals[0], totals[1], totals[2])));
 
         log.info("Scan complete");
     }
