@@ -5,11 +5,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
+
+import java.io.InputStream;
 
 @Slf4j
 @Component
@@ -64,6 +68,19 @@ public class MessageSender {
             telegramClient.execute(edit);
         } catch (TelegramApiException e) {
             log.error("Failed to edit message {} in chat {}: {}", messageId, chatId, e.getMessage());
+        }
+    }
+
+    public void sendDocument(Long chatId, InputStream content, String filename, String caption) {
+        SendDocument doc = SendDocument.builder()
+                .chatId(chatId)
+                .document(new InputFile(content, filename))
+                .caption(caption)
+                .build();
+        try {
+            telegramClient.execute(doc);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send document to {}: {}", chatId, e.getMessage());
         }
     }
 
