@@ -9,10 +9,12 @@ import com.hrbot.parser.ParserStatusRegistry;
 import com.hrbot.parser.SiteParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -42,6 +44,11 @@ public class VacancyService {
         ScanResult result = diffDetector.detectChanges(allFound);
         result.setTotalFound(allFound.size());
         return result;
+    }
+
+    @Async("scannerExecutor")
+    public CompletableFuture<ScanResult> scanSingleSiteAsync(VacancyFilter filter, String siteKey) {
+        return CompletableFuture.completedFuture(scanSingleSite(filter, siteKey));
     }
 
     public ScanResult scanSingleSite(VacancyFilter filter, String siteKey) {
