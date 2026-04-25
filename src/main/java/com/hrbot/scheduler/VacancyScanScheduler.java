@@ -58,6 +58,7 @@ public class VacancyScanScheduler {
 
         log.info("Manual scan for chatId={}: {} filter(s)", chatId, filters.size());
 
+        int totalFound = 0;
         int totalNew = 0;
         int totalUpdated = 0;
 
@@ -69,15 +70,17 @@ public class VacancyScanScheduler {
                 messageSender.sendText(chatId, "⏳ Scanning <code>%s</code>...".formatted(siteKey));
                 try {
                     ScanResult result = vacancyService.scanSingleSite(filter, siteKey);
+                    int foundCount = result.getTotalFound();
                     int newCount = result.getNewVacancies().size();
                     int updatedCount = result.getUpdatedVacancies().size();
+                    totalFound += foundCount;
                     totalNew += newCount;
                     totalUpdated += updatedCount;
 
                     notificationService.notify(filter, result);
 
-                    messageSender.sendText(chatId, "✔️ <code>%s</code>: %d new, %d updated"
-                            .formatted(siteKey, newCount, updatedCount));
+                    messageSender.sendText(chatId, "✔️ <code>%s</code>: %d found → %d new, %d updated"
+                            .formatted(siteKey, foundCount, newCount, updatedCount));
                 } catch (Exception e) {
                     log.error("Scan failed for filter [{}] site [{}]: {}", filter.getName(), siteKey, e.getMessage());
                     messageSender.sendText(chatId, "❌ <code>%s</code>: error — %s".formatted(siteKey, e.getMessage()));
@@ -85,6 +88,7 @@ public class VacancyScanScheduler {
             }
         }
 
-        messageSender.sendText(chatId, "✅ Done: <b>%d new</b>, <b>%d updated</b>".formatted(totalNew, totalUpdated));
+        messageSender.sendText(chatId, "✅ Done: <b>%d found</b>, %d new, %d updated"
+                .formatted(totalFound, totalNew, totalUpdated));
     }
 }
