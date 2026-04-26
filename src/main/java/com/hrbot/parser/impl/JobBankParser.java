@@ -141,11 +141,11 @@ public class JobBankParser implements SiteParser {
             sb.append("searchstring=").append(encode(filter.getKeywords())).append("&");
         }
 
-        String location = (filter.getLocation() != null && !filter.getLocation().isBlank())
-                ? filter.getLocation()
-                : "Canada";
+        boolean hasLocation = filter.getLocation() != null && !filter.getLocation().isBlank();
+        String location = hasLocation ? filter.getLocation() : "Canada";
+        int distance    = hasLocation ? 50 : 500;
         sb.append("locationstring=").append(encode(location)).append("&");
-        sb.append("distance=50&");
+        sb.append("distance=").append(distance).append("&");
         sb.append("sort=D");  // sort by date
 
         if (start > 0) {
