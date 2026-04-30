@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     name: Build & Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -17,31 +17,36 @@ jobs:
           distribution: 'corretto'
           cache: maven
 
-      - name: Run tests
-        run: mvn test -q
+      - name: Build & Test
+        run: mvn package -q
+
+      - uses: actions/upload-artifact@v4.6.2
+        with:
+          name: maven-build
+          path: target/
+          retention-days: 1
 
   deploy:
     name: Deploy to AWS
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4.2.2
 
-      - uses: actions/setup-java@v4.7.1
+      - uses: actions/download-artifact@v4.3.0
         with:
-          java-version: '21'
-          distribution: 'corretto'
-          cache: maven
+          name: maven-build
+          path: target/
 
       - uses: aws-actions/setup-sam@v2
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6.1.0
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
-      - uses: aws-actions/amazon-ecr-login@v2
+      - uses: aws-actions/amazon-ecr-login@v2.1.4
 
       - name: Build
         run: sam build
@@ -50,8 +55,10 @@ jobs:
         run: |
           sam deploy --no-confirm-changeset --resolve-image-repos \
             --parameter-overrides \
-              "BotToken=${{ secrets.BOT_TOKEN }}" \
+              "SpringDatasourceUrl=${{ secrets.SPRING_DATASOURCE_URL }}" \
+              "SpringDatasourceUsername=${{ secrets.SPRING_DATASOURCE_USERNAME }}" \
               "SpringDatasourcePassword=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \
+              "BotToken=${{ secrets.BOT_TOKEN }}" \
               "DeepSeekApiKey=${{ secrets.DEEPSEEK_API_KEY }}" \
               "BotVersion=${GITHUB_SHA::7}" \
               "AdminChatId=${{ vars.ADMIN_CHAT_ID }}"
