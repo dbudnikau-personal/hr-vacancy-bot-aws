@@ -1,44 +1,71 @@
----
-title: HR Vacancy Bot
-emoji: 🤖
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 8080
-pinned: false
----
-
 # HR Vacancy Bot
 
-A Telegram bot that monitors job vacancy sites and notifies HR about new or updated vacancies based on configurable filters.
+A Telegram bot that monitors job vacancy sites and notifies about new vacancies based on configurable filters. Runs on AWS Lambda.
 
 ## Features
 
-- 🔍 Monitors multiple job sites simultaneously
-- 🆕 Detects new vacancies and changes in existing ones
-- 📬 Sends notifications directly to Telegram
-- ⚙️ Configurable filters per chat (keywords, location, salary, sites)
-- 🔌 Pluggable parser architecture — easy to add new sites
+- Monitors multiple job sites simultaneously
+- Detects new vacancies and changes in existing ones
+- Sends notifications directly to Telegram
+- Configurable filters per chat (keywords, location, salary, sites)
+- AI-powered relevance scoring via DeepSeek
+- Pluggable parser architecture — easy to add new sites
 
 ## Supported Sites
 
-| Site | Method | Status |
-|------|--------|--------|
-| [Djinni](https://djinni.co) | HTML scraping (Jsoup) | ✅ Working |
-| [HH.ru](https://hh.ru) | HTML scraping (Jsoup) | ✅ Working |
-| LinkedIn | Playwright (planned) | 🚧 Not implemented |
+| Site | Method |
+|------|--------|
+| [HH.ru](https://hh.ru) | HTML scraping (Jsoup) |
+| [Djinni](https://djinni.co) | HTML scraping (Jsoup) |
+| [Getmatch](https://getmatch.ru) | HTML scraping (Jsoup) |
+| [LinkedIn](https://linkedin.com) | HTML scraping (Jsoup) |
+| [Indeed](https://indeed.com) | HTML scraping (Jsoup) |
+| [Wellfound](https://wellfound.com) | Playwright (cookie-refresher Lambda) |
+| [Job Bank Canada](https://jobbank.gc.ca) | Atom feed |
+| [RemoteOK](https://remoteok.com) | HTML scraping (Jsoup) |
+| [We Work Remotely](https://weworkremotely.com) | HTML scraping (Jsoup) |
+| [Remotive](https://remotive.com) | HTML scraping (Jsoup) |
 
 ## Tech Stack
 
-- **Java 21** + **Spring Boot 3.2**
-- **PostgreSQL** — vacancy storage and deduplication
+- **Java 21** + **Spring Boot 3.5** — application core
+- **AWS Lambda** — serverless runtime (BotHandler + Scanner functions)
+- **AWS SAM** — infrastructure as code and deployment
+- **API Gateway (HTTP API)** — Telegram webhook endpoint
+- **PostgreSQL (Neon)** — vacancy storage and deduplication
 - **Flyway** — database migrations
 - **Jsoup** — HTML parsing
-- **Playwright** — JS-rendered pages (planned)
-- **TelegramBots 9.2** — bot API
-- **Docker Compose** — local and production deployment
+- **Playwright (Python Lambda)** — JS-rendered pages (Wellfound)
+- **DeepSeek API** — AI vacancy relevance scoring
+- **TelegramBots 9.5** — bot API client
 
-## Quick Start
+## Architecture
+
+```
+Telegram Webhook
+      │
+API Gateway → BotHandlerLambda
+                    │
+              ScannerLambda (EventBridge, every 2h)
+                    ├── HhParser
+                    ├── DjinniParser
+                    ├── GetmatchParser
+                    ├── LinkedInParser
+                    ├── IndeedParser
+                    ├── WellfoundParser ──→ CookieRefresherLambda (Python/Playwright)
+                    ├── JobBankParser
+                    ├── RemoteOkParser
+                    ├── WeWorkRemotelyParser
+                    └── RemotiveParser
+                              │
+                    VacancyRelevanceService (DeepSeek)
+                              │
+                    PostgreSQL (Neon) — deduplication
+                              │
+                    Telegram notification
+```
+
+## Local Development
 
 ### Prerequisites
 
@@ -49,42 +76,30 @@ A Telegram bot that monitors job vacancy sites and notifies HR about new or upda
 ### Setup
 
 ```bash
-git clone https://github.com/dbudnikau-personal/hr-vacancy-bot.git
-cd hr-vacancy-bot
+git clone https://github.com/dbudnikau-personal/hr-vacancy-bot-aws.git
+cd hr-vacancy-bot-aws
 
 cp .env.example .env
-# Edit .env — set BOT_TOKEN
+# Fill in .env with your values
 ```
 
-### Run locally
-
-```bash
-# Start PostgreSQL
-docker-compose up postgres -d
-
-# Run the app
-export $(cat .env | xargs) && mvn spring-boot:run
-```
-
-### Run with Docker
+### Run locally (Docker Compose)
 
 ```bash
 docker-compose up -d
 ```
 
-## Configuration
+## Deployment
 
-Edit `.env`:
+Deployment to AWS is handled automatically by GitHub Actions on push to `master`.
 
-```env
-BOT_TOKEN=your_telegram_bot_token
+For manual deploy:
 
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/hrbot
-SPRING_DATASOURCE_USERNAME=hrbot
-SPRING_DATASOURCE_PASSWORD=hrbot
+```bash
+cp .env.example .env
+# Fill in .env
 
-# Cron schedule (default: every 2 hours)
-BOT_SCAN_CRON=0 0 */2 * * *
+./deploy.sh
 ```
 
 ## Bot Commands
@@ -94,12 +109,13 @@ BOT_SCAN_CRON=0 0 */2 * * *
 | `/addfilter <name> <keywords> [location] [salaryMin] [sites]` | Add vacancy filter |
 | `/filters` | List active filters |
 | `/removefilter <id>` | Deactivate filter by ID |
-| `/vacancies` | Browse all saved vacancies with inline Prev/Next pagination |
-| `/vacancies <keyword>` | Search vacancies by keyword in title or company |
-| `/report <site>` | Export all saved vacancies for a site to CSV (e.g. `/report hh`) |
+| `/vacancies` | Browse saved vacancies with inline pagination |
+| `/vacancies <keyword>` | Search vacancies by keyword |
+| `/report <site>` | Export vacancies for a site to CSV |
 | `/scan` | Trigger manual scan for all active filters |
 | `/scan <filter_id>` | Trigger manual scan for a specific filter |
 | `/status` | Show parser health status |
+| `/version` | Show deployed version |
 | `/help` | Show available commands |
 
 ### Filter Examples
@@ -111,8 +127,8 @@ BOT_SCAN_CRON=0 0 */2 * * *
 # Search Senior Java in Georgia on HH
 /addfilter senior-tbilisi "Senior Java" 2758 5000 hh
 
-# Search Java Spring on Djinni
-/addfilter spring-djinni "Java Spring" "" "" djinni
+# Search remote Java roles
+/addfilter remote-java "Java" "" "" remoteok,weworkremotely,remotive
 ```
 
 ### HH Location IDs
@@ -123,22 +139,6 @@ BOT_SCAN_CRON=0 0 */2 * * *
 | `2` | Saint Petersburg |
 | `113` | Russia |
 | `2758` | Georgia |
-
-## Architecture
-
-```
-Scheduler
-    └── VacancyService
-            ├── DjinniParser (Jsoup)
-            ├── HhParser (Jsoup)
-            └── LinkedInParser (Playwright, planned)
-                        │
-                DiffDetectorService (PostgreSQL)
-                        │
-                NotificationService
-                        │
-                TelegramBot
-```
 
 ## Adding a New Site Parser
 
@@ -166,39 +166,54 @@ public class MySiteParser implements SiteParser {
 
 ```
 src/main/java/com/hrbot/
+├── lambda/
+│   ├── BotHandlerLambda.java
+│   └── ScannerLambda.java
 ├── bot/
-│   ├── TelegramBot.java
 │   ├── MessageSender.java
+│   ├── DeploymentNotifier.java
+│   ├── callback/
+│   │   ├── CallbackHandler.java
+│   │   └── CallbackRouter.java
 │   └── command/
 │       ├── BotCommand.java (interface)
 │       ├── CommandRouter.java
 │       ├── AddFilterCommand.java
 │       ├── ListFiltersCommand.java
 │       ├── RemoveFilterCommand.java
+│       ├── VacanciesCommand.java
+│       ├── ScanCommand.java
+│       ├── ReportCommand.java
+│       ├── StatusCommand.java
+│       ├── VersionCommand.java
 │       └── HelpCommand.java
 ├── parser/
 │   ├── SiteParser.java (interface)
 │   ├── ParserRegistry.java
+│   ├── ParserStatusRegistry.java
 │   └── impl/
-│       ├── DjinniParser.java
 │       ├── HhParser.java
-│       └── LinkedInParser.java
-├── scheduler/
-│   └── VacancyScanScheduler.java
-├── service/
-│   ├── VacancyService.java
-│   ├── FilterService.java
-│   ├── DiffDetectorService.java
-│   └── NotificationService.java
+│       ├── DjinniParser.java
+│       ├── GetmatchParser.java
+│       ├── LinkedInParser.java
+│       ├── IndeedParser.java
+│       ├── WellfoundParser.java
+│       ├── JobBankParser.java
+│       ├── RemoteOkParser.java
+│       ├── WeWorkRemotelyParser.java
+│       └── RemotiveParser.java
+├── ai/
+│   ├── DeepSeekClient.java
+│   └── VacancyRelevanceService.java
 ├── model/
 │   ├── Vacancy.java
 │   ├── VacancyFilter.java
-│   └── ScanResult.java
-├── repository/
-│   ├── VacancyRepository.java
-│   └── FilterRepository.java
+│   ├── ScanResult.java
+│   └── HhArea.java
 └── config/
     └── AppConfig.java
+
+cookie-refresher/         — Python Lambda, refreshes Wellfound cookies via Playwright
 ```
 
 ## License
