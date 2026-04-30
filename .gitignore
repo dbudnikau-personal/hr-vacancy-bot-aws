@@ -16,6 +16,12 @@ out/
 
 # macOS
 .DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
 
 # Logs
 *.log
@@ -26,3 +32,4 @@ logs/
 
 # AWS SAM build artifacts
 .aws-sam/
+/.claude/
