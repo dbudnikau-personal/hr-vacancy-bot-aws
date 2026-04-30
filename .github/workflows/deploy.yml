@@ -49,7 +49,9 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v2.1.4
 
       - name: Build
-        run: sam build BotHandlerFunction VacancyScannerFunction
+        run: |
+          sam build BotHandlerFunction
+          sam build VacancyScannerFunction
 
       - name: Deploy
         run: |
