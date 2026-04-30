@@ -9,7 +9,7 @@ docker-compose.yml
 .env
 .env.example
 samconfig.toml
-deploy.sh
+scripts/
 template.yaml
 cookie-refresher/
 .github/
