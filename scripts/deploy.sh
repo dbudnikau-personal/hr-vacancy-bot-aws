@@ -27,7 +27,7 @@ echo "Building..."
 sam build
 
 echo "Deploying..."
-sam deploy --no-confirm-changeset \
+sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
   --parameter-overrides \
     "SpringDatasourceUrl=${SPRING_DATASOURCE_URL}" \
     "SpringDatasourceUsername=${SPRING_DATASOURCE_USERNAME}" \
