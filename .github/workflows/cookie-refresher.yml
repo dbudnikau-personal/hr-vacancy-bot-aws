@@ -23,18 +23,8 @@ jobs:
 
       - uses: aws-actions/amazon-ecr-login@v2.1.4
 
-      - uses: docker/setup-buildx-action@v4.0.0
-
-      - uses: actions/cache@v5.0.5
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ hashFiles('cookie-refresher/Dockerfile', 'cookie-refresher/requirements.txt') }}
-          restore-keys: ${{ runner.os }}-buildx-
-
       - name: Build
         run: sam build CookieRefresherFunction
-        env:
-          DOCKER_BUILDKIT: 1
 
       - name: Deploy
         run: |
