@@ -16,10 +16,8 @@ RUN dnf install -y \
     && dnf clean all
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Download Chromium binary into the image
-RUN playwright install chromium
+RUN pip install --no-cache-dir -r requirements.txt && \
+    playwright install chromium
 
 COPY app.py .
 
