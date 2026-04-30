@@ -24,8 +24,7 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 export PATH="$JAVA_HOME/bin:$PATH"
 
 echo "Building..."
-sam build BotHandlerFunction
-sam build VacancyScannerFunction
+sam build
 
 echo "Deploying..."
 sam deploy --no-confirm-changeset \
