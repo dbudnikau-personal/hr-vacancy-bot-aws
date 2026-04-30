@@ -31,7 +31,7 @@ jobs:
       - uses: actions/upload-artifact@v4.6.2
         with:
           name: maven-build
-          path: target/*.jar
+          path: target/hr-vacancy-bot-aws-*.jar
           retention-days: 1
 
   deploy:
