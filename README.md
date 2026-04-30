@@ -99,7 +99,7 @@ For manual deploy:
 cp .env.example .env
 # Fill in .env
 
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ## Bot Commands
