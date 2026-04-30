@@ -34,7 +34,7 @@ jobs:
 
       - name: Deploy
         run: |
-          sam deploy --no-confirm-changeset --resolve-image-repos \
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --resolve-image-repos \
             --parameter-overrides \
               "SpringDatasourceUrl=${{ secrets.SPRING_DATASOURCE_URL }}" \
               "SpringDatasourceUsername=${{ secrets.SPRING_DATASOURCE_USERNAME }}" \
