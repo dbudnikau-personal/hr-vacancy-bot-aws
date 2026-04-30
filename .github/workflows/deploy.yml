@@ -69,9 +69,7 @@ jobs:
         run: sam build
 
       - name: Debug - build artifacts
-        run: |
-          ls -la .aws-sam/build/BotHandlerFunction/
-          unzip -l .aws-sam/build/BotHandlerFunction/*.jar | grep BotHandlerLambda
+        run: ls -la .aws-sam/build/BotHandlerFunction/
 
       - name: Deploy
         run: |
