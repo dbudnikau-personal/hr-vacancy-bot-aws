@@ -23,6 +23,12 @@ jobs:
 
       - uses: aws-actions/amazon-ecr-login@v2.1.4
 
+      - uses: actions/cache@v5.0.5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-sam-pip-${{ hashFiles('.github/workflows/cookie-refresher.yml') }}
+          restore-keys: ${{ runner.os }}-sam-pip-
+
       - name: Build
         run: sam build CookieRefresherFunction
 
