@@ -1,42 +1,17 @@
-name: Deploy
+name: Deploy Cookie Refresher
 
 on:
   push:
     branches: [master]
+    paths:
+      - 'cookie-refresher/**'
 
 jobs:
-  build:
-    name: Build & Test
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4.2.2
-
-      - uses: actions/setup-java@v4.7.1
-        with:
-          java-version: '21'
-          distribution: 'corretto'
-          cache: maven
-
-      - name: Build & Test
-        run: mvn package -q
-
-      - uses: actions/upload-artifact@v4.6.2
-        with:
-          name: maven-build
-          path: target/*.jar
-          retention-days: 1
-
   deploy:
-    name: Deploy to AWS
-    needs: build
+    name: Build & Deploy Cookie Refresher
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4.2.2
-
-      - uses: actions/download-artifact@v4.3.0
-        with:
-          name: maven-build
-          path: target/
 
       - uses: aws-actions/setup-sam@v2
 
@@ -49,7 +24,7 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v2.1.4
 
       - name: Build
-        run: sam build BotHandlerFunction VacancyScannerFunction
+        run: sam build CookieRefresherFunction
 
       - name: Deploy
         run: |
