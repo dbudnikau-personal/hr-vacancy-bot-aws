@@ -3,6 +3,14 @@ name: Deploy
 on:
   push:
     branches: [master]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'template.yaml'
+      - 'samconfig.toml'
+      - 'Makefile'
+      - 'cookie-refresher/**'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   build:
@@ -37,6 +45,12 @@ jobs:
         with:
           name: maven-build
           path: target/
+
+      - uses: actions/cache@v5.0.5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-sam-pip-${{ hashFiles('.github/workflows/deploy.yml') }}
+          restore-keys: ${{ runner.os }}-sam-pip-
 
       - uses: aws-actions/setup-sam@v2
 
