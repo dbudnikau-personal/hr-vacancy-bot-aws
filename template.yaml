@@ -103,6 +103,8 @@ Resources:
 
   BotHandlerFunction:
     Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
     Properties:
       FunctionName: hr-vacancy-bot-handler
       Handler: com.hrbot.lambda.BotHandlerLambda::handleRequest
@@ -133,6 +135,8 @@ Resources:
 
   VacancyScannerFunction:
     Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
     Properties:
       FunctionName: hr-vacancy-bot-scanner
       Handler: com.hrbot.lambda.ScannerLambda::handleRequest
