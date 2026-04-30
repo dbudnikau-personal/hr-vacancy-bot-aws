@@ -1,5 +1,7 @@
+JAR := $(shell ls target/*.jar | grep -v original)
+
 build-BotHandlerFunction:
-	cp target/*.jar $(ARTIFACTS_DIR)/
+	cp $(JAR) $(ARTIFACTS_DIR)/
 
 build-VacancyScannerFunction:
-	cp target/*.jar $(ARTIFACTS_DIR)/
+	cp $(JAR) $(ARTIFACTS_DIR)/
