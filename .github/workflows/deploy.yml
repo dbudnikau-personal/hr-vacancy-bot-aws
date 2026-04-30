@@ -62,14 +62,8 @@ jobs:
 
       - uses: aws-actions/amazon-ecr-login@v2.1.4
 
-      - name: Debug - target contents
-        run: ls -la target/
-
       - name: Build
         run: sam build
-
-      - name: Debug - build artifacts
-        run: ls -la .aws-sam/build/BotHandlerFunction/
 
       - name: Deploy
         run: |
