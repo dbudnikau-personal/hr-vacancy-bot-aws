@@ -39,10 +39,10 @@ public class CommandRouter {
 
         BotCommand handler = commands.get(cmd);
         if (handler != null) {
-            log.info("Routing command [{}] from chatId={}", cmd, message.getChatId());
+            log.debug("Routing command [{}] from chatId={}", cmd, message.getChatId());
             handler.handle(message, args);
         } else {
-            log.info("Unknown command [{}] from chatId={}", cmd, message.getChatId());
+            log.debug("Unknown command [{}] from chatId={}", cmd, message.getChatId());
         }
     }
 
