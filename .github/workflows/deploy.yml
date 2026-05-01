@@ -77,6 +77,7 @@ jobs:
       - name: Register Telegram webhook
         run: |
           BOT_TOKEN=$(aws ssm get-parameter --name /hrbot/bot/token --with-decryption --query Parameter.Value --output text)
+          echo "::add-mask::$BOT_TOKEN"
           WEBHOOK_URL=$(aws cloudformation describe-stacks --stack-name hr-vacancy-bot \
             --query "Stacks[0].Outputs[?OutputKey=='WebhookUrl'].OutputValue" --output text)
           RESULT=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" -d "url=${WEBHOOK_URL}")
