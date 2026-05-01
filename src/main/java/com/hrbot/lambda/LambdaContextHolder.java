@@ -1,7 +1,12 @@
 package com.hrbot.lambda;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrbot.HrVacancyBotApplication;
+import com.hrbot.bot.DeploymentNotifier;
 import com.hrbot.bot.MessageSender;
+import com.hrbot.bot.callback.CallbackRouter;
+import com.hrbot.bot.command.CommandRouter;
+import com.hrbot.scheduler.VacancyScanScheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.crac.Context;
 import org.crac.Core;
@@ -28,20 +33,27 @@ public class LambdaContextHolder implements Resource {
             "/hrbot/deepseek/api-key",    "DEEPSEEK_API_KEY"
     );
 
-    private static final ConfigurableApplicationContext context;
+    static final CommandRouter commandRouter;
+    static final CallbackRouter callbackRouter;
+    static final ObjectMapper objectMapper;
+    static final VacancyScanScheduler vacancyScanScheduler;
+    private static final MessageSender messageSender;
+    private static final DeploymentNotifier deploymentNotifier;
 
     static {
         Core.getGlobalContext().register(new LambdaContextHolder());
         loadSecretsFromSsm();
         log.info("Initializing Spring context...");
-        context = new SpringApplicationBuilder(HrVacancyBotApplication.class)
+        ConfigurableApplicationContext context = new SpringApplicationBuilder(HrVacancyBotApplication.class)
                 .web(WebApplicationType.NONE)
                 .run();
+        commandRouter = context.getBean(CommandRouter.class);
+        callbackRouter = context.getBean(CallbackRouter.class);
+        objectMapper = context.getBean(ObjectMapper.class);
+        vacancyScanScheduler = context.getBean(VacancyScanScheduler.class);
+        messageSender = context.getBean(MessageSender.class);
+        deploymentNotifier = context.getBean(DeploymentNotifier.class);
         log.info("Spring context initialized");
-    }
-
-    public static <T> T getBean(Class<T> type) {
-        return context.getBean(type);
     }
 
     @Override
@@ -50,7 +62,8 @@ public class LambdaContextHolder implements Resource {
     @Override
     public void afterRestore(Context<? extends Resource> ctx) {
         loadSecretsFromSsm();
-        context.getBean(MessageSender.class).reloadToken(System.getProperty("BOT_TOKEN"));
+        messageSender.reloadToken(System.getProperty("BOT_TOKEN"));
+        deploymentNotifier.notifyDeployment();
     }
 
     private static void loadSecretsFromSsm() {

@@ -18,9 +18,7 @@ public class BotHandlerLambda implements RequestHandler<APIGatewayV2HTTPEvent, A
     private final ObjectMapper objectMapper;
 
     public BotHandlerLambda() {
-        this.commandRouter = LambdaContextHolder.getBean(CommandRouter.class);
-        this.callbackRouter = LambdaContextHolder.getBean(CallbackRouter.class);
-        this.objectMapper = LambdaContextHolder.getBean(ObjectMapper.class);
+        this(LambdaContextHolder.commandRouter, LambdaContextHolder.callbackRouter, LambdaContextHolder.objectMapper);
     }
 
     public BotHandlerLambda(CommandRouter commandRouter, CallbackRouter callbackRouter, ObjectMapper objectMapper) {
