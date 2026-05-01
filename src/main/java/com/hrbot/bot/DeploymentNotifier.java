@@ -27,8 +27,12 @@ public class DeploymentNotifier {
             return;
         }
         try {
-            messageSender.sendText(adminChatId, "HR Vacancy Bot v" + version + " deployed");
-            log.info("Deployment notification sent to chat {}", adminChatId);
+            boolean sent = messageSender.sendText(adminChatId, "HR Vacancy Bot v" + version + " deployed");
+            if (sent) {
+                log.info("Deployment notification sent to chat {}", adminChatId);
+            } else {
+                log.warn("Failed to send deployment notification to chat {}", adminChatId);
+            }
         } catch (Exception e) {
             log.warn("Failed to send deployment notification: {}", e.getMessage());
         }
