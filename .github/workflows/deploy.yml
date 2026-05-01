@@ -56,6 +56,14 @@ jobs:
 
       - uses: aws-actions/amazon-ecr-login@v2.1.4
 
+      - name: Push secrets to SSM
+        run: |
+          aws ssm put-parameter --name /hrbot/datasource/url      --value "${{ secrets.SPRING_DATASOURCE_URL }}"      --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/datasource/username  --value "${{ secrets.SPRING_DATASOURCE_USERNAME }}"  --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/datasource/password  --value "${{ secrets.SPRING_DATASOURCE_PASSWORD }}"  --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/bot/token            --value "${{ secrets.BOT_TOKEN }}"                   --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/deepseek/api-key     --value "${{ secrets.DEEPSEEK_API_KEY }}"            --type SecureString --overwrite
+
       - name: Build
         run: sam build
 
@@ -63,10 +71,5 @@ jobs:
         run: |
           sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --resolve-image-repos \
             --parameter-overrides \
-              "SpringDatasourceUrl=${{ secrets.SPRING_DATASOURCE_URL }}" \
-              "SpringDatasourceUsername=${{ secrets.SPRING_DATASOURCE_USERNAME }}" \
-              "SpringDatasourcePassword=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \
-              "BotToken=${{ secrets.BOT_TOKEN }}" \
-              "DeepSeekApiKey=${{ secrets.DEEPSEEK_API_KEY }}" \
               "BotVersion=${GITHUB_SHA::7}" \
               "AdminChatId=${{ vars.ADMIN_CHAT_ID }}"
