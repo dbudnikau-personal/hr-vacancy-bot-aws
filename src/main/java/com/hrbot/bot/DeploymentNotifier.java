@@ -21,7 +21,7 @@ public class DeploymentNotifier {
         try {
             adminChatId = Long.parseLong(rawChatId);
         } catch (NumberFormatException e) {
-            log.warn("DeploymentNotifier: invalid ADMIN_CHAT_ID '{}', skipping", rawChatId);
+            log.warn("DeploymentNotifier: invalid ADMIN_CHAT_ID, skipping");
             return;
         }
         if (adminChatId == 0) {
