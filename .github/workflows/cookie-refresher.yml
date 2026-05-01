@@ -29,6 +29,14 @@ jobs:
           key: ${{ runner.os }}-sam-pip-${{ hashFiles('.github/workflows/cookie-refresher.yml') }}
           restore-keys: ${{ runner.os }}-sam-pip-
 
+      - name: Push secrets to SSM
+        run: |
+          aws ssm put-parameter --name /hrbot/datasource/url      --value "${{ secrets.SPRING_DATASOURCE_URL }}"      --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/datasource/username  --value "${{ secrets.SPRING_DATASOURCE_USERNAME }}"  --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/datasource/password  --value "${{ secrets.SPRING_DATASOURCE_PASSWORD }}"  --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/bot/token            --value "${{ secrets.BOT_TOKEN }}"                   --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/deepseek/api-key     --value "${{ secrets.DEEPSEEK_API_KEY }}"            --type SecureString --overwrite
+
       - name: Build
         run: sam build CookieRefresherFunction
 
@@ -36,10 +44,24 @@ jobs:
         run: |
           sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --resolve-image-repos \
             --parameter-overrides \
-              "SpringDatasourceUrl=${{ secrets.SPRING_DATASOURCE_URL }}" \
-              "SpringDatasourceUsername=${{ secrets.SPRING_DATASOURCE_USERNAME }}" \
-              "SpringDatasourcePassword=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" \
-              "BotToken=${{ secrets.BOT_TOKEN }}" \
-              "DeepSeekApiKey=${{ secrets.DEEPSEEK_API_KEY }}" \
               "BotVersion=${GITHUB_SHA::7}" \
               "AdminChatId=${{ vars.ADMIN_CHAT_ID }}"
+
+      - name: Register Telegram webhook
+        run: |
+          BOT_TOKEN=$(aws ssm get-parameter --name /hrbot/bot/token --with-decryption --query Parameter.Value --output text)
+          echo "::add-mask::$BOT_TOKEN"
+          WEBHOOK_URL=$(aws cloudformation describe-stacks --stack-name hr-vacancy-bot \
+            --query "Stacks[0].Outputs[?OutputKey=='WebhookUrl'].OutputValue" --output text)
+          RESULT=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" -d "url=${WEBHOOK_URL}")
+          echo "setWebhook result: $(echo $RESULT | jq -r .description)"
+          echo $RESULT | jq -e '.ok == true'
+
+      - name: Set CloudWatch log retention
+        run: |
+          for log_group in \
+            /aws/lambda/hr-vacancy-bot-handler \
+            /aws/lambda/hr-vacancy-bot-scanner \
+            /aws/lambda/hr-vacancy-bot-cookie-refresher; do
+            aws logs put-retention-policy --log-group-name "$log_group" --retention-in-days 30 || true
+          done
