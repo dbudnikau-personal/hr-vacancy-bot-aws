@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hrbot.bot.DeploymentNotifier;
 import com.hrbot.bot.callback.CallbackRouter;
 import com.hrbot.bot.command.CommandRouter;
 import lombok.extern.slf4j.Slf4j;
@@ -16,19 +17,26 @@ public class BotHandlerLambda implements RequestHandler<APIGatewayV2HTTPEvent, A
     private final CommandRouter commandRouter;
     private final CallbackRouter callbackRouter;
     private final ObjectMapper objectMapper;
+    private final DeploymentNotifier deploymentNotifier;
 
     public BotHandlerLambda() {
-        this(LambdaContextHolder.commandRouter, LambdaContextHolder.callbackRouter, LambdaContextHolder.objectMapper);
+        this(LambdaContextHolder.commandRouter, LambdaContextHolder.callbackRouter,
+                LambdaContextHolder.objectMapper, LambdaContextHolder.deploymentNotifier);
     }
 
-    public BotHandlerLambda(CommandRouter commandRouter, CallbackRouter callbackRouter, ObjectMapper objectMapper) {
+    public BotHandlerLambda(CommandRouter commandRouter, CallbackRouter callbackRouter,
+                             ObjectMapper objectMapper, DeploymentNotifier deploymentNotifier) {
         this.commandRouter = commandRouter;
         this.callbackRouter = callbackRouter;
         this.objectMapper = objectMapper;
+        this.deploymentNotifier = deploymentNotifier;
     }
 
     @Override
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
+        if (LambdaContextHolder.consumePendingNotification()) {
+            deploymentNotifier.notifyDeployment();
+        }
         try {
             Update update = objectMapper.readValue(event.getBody(), Update.class);
             if (update.hasMessage() && update.getMessage().hasText()) {
