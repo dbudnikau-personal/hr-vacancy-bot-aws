@@ -11,6 +11,8 @@ import com.hrbot.bot.command.CommandRouter;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.function.BooleanSupplier;
+
 @Slf4j
 public class BotHandlerLambda implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
 
@@ -18,23 +20,32 @@ public class BotHandlerLambda implements RequestHandler<APIGatewayV2HTTPEvent, A
     private final CallbackRouter callbackRouter;
     private final ObjectMapper objectMapper;
     private final DeploymentNotifier deploymentNotifier;
+    private final BooleanSupplier pendingNotification;
 
     public BotHandlerLambda() {
         this(LambdaContextHolder.commandRouter, LambdaContextHolder.callbackRouter,
-                LambdaContextHolder.objectMapper, LambdaContextHolder.deploymentNotifier);
+                LambdaContextHolder.objectMapper, LambdaContextHolder.deploymentNotifier,
+                LambdaContextHolder::consumePendingNotification);
     }
 
     public BotHandlerLambda(CommandRouter commandRouter, CallbackRouter callbackRouter,
                              ObjectMapper objectMapper, DeploymentNotifier deploymentNotifier) {
+        this(commandRouter, callbackRouter, objectMapper, deploymentNotifier, () -> false);
+    }
+
+    BotHandlerLambda(CommandRouter commandRouter, CallbackRouter callbackRouter,
+                     ObjectMapper objectMapper, DeploymentNotifier deploymentNotifier,
+                     BooleanSupplier pendingNotification) {
         this.commandRouter = commandRouter;
         this.callbackRouter = callbackRouter;
         this.objectMapper = objectMapper;
         this.deploymentNotifier = deploymentNotifier;
+        this.pendingNotification = pendingNotification;
     }
 
     @Override
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
-        if (LambdaContextHolder.consumePendingNotification()) {
+        if (pendingNotification.getAsBoolean()) {
             deploymentNotifier.notifyDeployment();
         }
         try {
