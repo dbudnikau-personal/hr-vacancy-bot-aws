@@ -5,9 +5,6 @@ Description: HR Vacancy Bot — AWS Lambda
 Globals:
   Function:
     MemorySize: 1024
-    Environment:
-      Variables:
-        GIT_SHA: !Ref BotVersion
 
 Parameters:
   BotVersion:
@@ -31,6 +28,7 @@ Resources:
       AutoPublishAlias: live
       Environment:
         Variables:
+          GIT_SHA: !Ref BotVersion
           SCANNER_FUNCTION_NAME: !Sub "${VacancyScannerFunction.Arn}:live"
       Policies:
         - AWSLambdaBasicExecutionRole
@@ -75,6 +73,7 @@ Resources:
         MaximumRetryAttempts: 0
       Environment:
         Variables:
+          GIT_SHA: !Ref BotVersion
           COOKIE_REFRESHER_FUNCTION_NAME: !GetAtt CookieRefresherFunction.Arn
       Policies:
         - AWSLambdaBasicExecutionRole
