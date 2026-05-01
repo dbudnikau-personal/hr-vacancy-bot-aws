@@ -19,9 +19,13 @@ import java.io.InputStream;
 @Component
 public class MessageSender {
 
-    private final TelegramClient telegramClient;
+    private TelegramClient telegramClient;
 
     public MessageSender(@Value("${bot.token}") String botToken) {
+        this.telegramClient = new OkHttpTelegramClient(botToken);
+    }
+
+    public void reloadToken(String botToken) {
         this.telegramClient = new OkHttpTelegramClient(botToken);
     }
 

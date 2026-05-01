@@ -90,6 +90,13 @@
             </exclusions>
         </dependency>
 
+        <!-- CRaC API for SnapStart afterRestore hook (implementation provided by Lambda runtime) -->
+        <dependency>
+            <groupId>org.crac</groupId>
+            <artifactId>crac</artifactId>
+            <version>1.5.0</version>
+        </dependency>
+
         <!-- Telegram client (for sending messages) -->
         <dependency>
             <groupId>org.telegram</groupId>
