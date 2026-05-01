@@ -7,34 +7,9 @@ Globals:
     MemorySize: 1024
     Environment:
       Variables:
-        SPRING_DATASOURCE_URL: !Ref SpringDatasourceUrl
-        SPRING_DATASOURCE_USERNAME: !Ref SpringDatasourceUsername
-        SPRING_DATASOURCE_PASSWORD: !Ref SpringDatasourcePassword
-        BOT_TOKEN: !Ref BotToken
-        DEEPSEEK_API_KEY: !Ref DeepSeekApiKey
         GIT_SHA: !Ref BotVersion
 
 Parameters:
-  SpringDatasourceUrl:
-    Type: String
-    NoEcho: true
-    Description: JDBC URL for PostgreSQL (Neon)
-  SpringDatasourceUsername:
-    Type: String
-    NoEcho: true
-    Description: Database user
-  SpringDatasourcePassword:
-    Type: String
-    NoEcho: true
-    Description: Database password
-  BotToken:
-    Type: String
-    NoEcho: true
-    Description: Telegram bot token
-  DeepSeekApiKey:
-    Type: String
-    NoEcho: true
-    Description: DeepSeek API key
   BotVersion:
     Type: String
     Default: local
@@ -58,6 +33,17 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ssm-read-bot-token
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/bot/token"
+              - Effect: Allow
+                Action: kms:Decrypt
+                Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
 
   WebhookRegistrarFunction:
     Type: AWS::Lambda::Function
@@ -75,9 +61,12 @@ Resources:
           import urllib.parse
           import json
           import logging
+          import boto3
           import cfnresponse
 
           logging.getLogger().setLevel(logging.WARNING)
+
+          ssm = boto3.client('ssm')
 
           def handler(event, context):
               try:
@@ -85,7 +74,9 @@ Resources:
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
                       return
 
-                  bot_token = event['ResourceProperties']['BotToken']
+                  bot_token = ssm.get_parameter(
+                      Name='/hrbot/bot/token', WithDecryption=True
+                  )['Parameter']['Value']
                   webhook_url = event['ResourceProperties']['WebhookUrl']
 
                   data = urllib.parse.urlencode({'url': webhook_url}).encode()
@@ -106,7 +97,6 @@ Resources:
     DependsOn: BotHandlerFunction
     Properties:
       ServiceToken: !GetAtt WebhookRegistrarFunction.Arn
-      BotToken: !Ref BotToken
       WebhookUrl: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook"
 
   BotHandlerFunction:
@@ -132,6 +122,17 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !Sub "${VacancyScannerFunction.Arn}:live"
+            - Effect: Allow
+              Action: ssm:GetParameters
+              Resource:
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/datasource/url"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/datasource/username"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/datasource/password"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/bot/token"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/deepseek/api-key"
+            - Effect: Allow
+              Action: kms:Decrypt
+              Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
       Events:
         WebhookApi:
           Type: HttpApi
@@ -161,6 +162,14 @@ Resources:
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
+            - Effect: Allow
+              Action: ssm:GetParameters
+              Resource:
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/datasource/url"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/datasource/username"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/datasource/password"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/bot/token"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/deepseek/api-key"
             - Effect: Allow
               Action: ssm:GetParameter
               Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/wellfound/*"
