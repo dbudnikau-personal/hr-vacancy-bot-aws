@@ -25,7 +25,7 @@ public class MessageSender {
         this.telegramClient = new OkHttpTelegramClient(botToken);
     }
 
-    public void sendText(Long chatId, String html) {
+    public boolean sendText(Long chatId, String html) {
         SendMessage message = SendMessage.builder()
                 .chatId(chatId)
                 .text(html)
@@ -34,8 +34,10 @@ public class MessageSender {
                 .build();
         try {
             telegramClient.execute(message);
+            return true;
         } catch (TelegramApiException e) {
             log.error("Failed to send message to {}: {}", chatId, e.getMessage());
+            return false;
         }
     }
 
