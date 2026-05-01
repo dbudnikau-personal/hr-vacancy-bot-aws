@@ -213,30 +213,6 @@ Resources:
       DockerContext: ./cookie-refresher
       Dockerfile: Dockerfile
 
-  BotHandlerLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/hr-vacancy-bot-handler
-      RetentionInDays: 30
-
-  VacancyScannerLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/hr-vacancy-bot-scanner
-      RetentionInDays: 30
-
-  CookieRefresherLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/hr-vacancy-bot-cookie-refresher
-      RetentionInDays: 30
-
-  WebhookRegistrarLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /aws/lambda/hr-vacancy-bot-webhook-registrar
-      RetentionInDays: 7
-
 Outputs:
   WebhookUrl:
     Description: Telegram webhook URL — register this with setWebhook

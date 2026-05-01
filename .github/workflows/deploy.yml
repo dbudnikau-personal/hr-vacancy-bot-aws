@@ -73,3 +73,13 @@ jobs:
             --parameter-overrides \
               "BotVersion=${GITHUB_SHA::7}" \
               "AdminChatId=${{ vars.ADMIN_CHAT_ID }}"
+
+      - name: Set CloudWatch log retention
+        run: |
+          for log_group in \
+            /aws/lambda/hr-vacancy-bot-handler \
+            /aws/lambda/hr-vacancy-bot-scanner \
+            /aws/lambda/hr-vacancy-bot-cookie-refresher; do
+            aws logs put-retention-policy --log-group-name "$log_group" --retention-in-days 30 || true
+          done
+          aws logs put-retention-policy --log-group-name /aws/lambda/hr-vacancy-bot-webhook-registrar --retention-in-days 7 || true
