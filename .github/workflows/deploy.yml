@@ -63,6 +63,7 @@ jobs:
           aws ssm put-parameter --name /hrbot/datasource/password  --value "${{ secrets.SPRING_DATASOURCE_PASSWORD }}"  --type SecureString --overwrite
           aws ssm put-parameter --name /hrbot/bot/token            --value "${{ secrets.BOT_TOKEN }}"                   --type SecureString --overwrite
           aws ssm put-parameter --name /hrbot/deepseek/api-key     --value "${{ secrets.DEEPSEEK_API_KEY }}"            --type SecureString --overwrite
+          aws ssm put-parameter --name /hrbot/admin/chat-id        --value "${{ secrets.ADMIN_CHAT_ID }}"               --type SecureString --overwrite
 
       - name: Build
         run: sam build
@@ -71,8 +72,7 @@ jobs:
         run: |
           sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --resolve-image-repos \
             --parameter-overrides \
-              "BotVersion=${GITHUB_SHA::7}" \
-              "AdminChatId=${{ vars.ADMIN_CHAT_ID }}"
+              "BotVersion=${GITHUB_SHA::7}"
 
       - name: Register Telegram webhook
         run: |

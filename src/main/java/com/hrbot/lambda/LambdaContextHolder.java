@@ -30,7 +30,8 @@ public class LambdaContextHolder implements Resource {
             "/hrbot/datasource/username", "SPRING_DATASOURCE_USERNAME",
             "/hrbot/datasource/password", "SPRING_DATASOURCE_PASSWORD",
             "/hrbot/bot/token",           "BOT_TOKEN",
-            "/hrbot/deepseek/api-key",    "DEEPSEEK_API_KEY"
+            "/hrbot/deepseek/api-key",    "DEEPSEEK_API_KEY",
+            "/hrbot/admin/chat-id",       "ADMIN_CHAT_ID"
     );
 
     static final CommandRouter commandRouter;
