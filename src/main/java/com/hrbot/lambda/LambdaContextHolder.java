@@ -1,7 +1,11 @@
 package com.hrbot.lambda;
 
 import com.hrbot.HrVacancyBotApplication;
+import com.hrbot.bot.MessageSender;
 import lombok.extern.slf4j.Slf4j;
+import org.crac.Context;
+import org.crac.Core;
+import org.crac.Resource;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -11,11 +15,10 @@ import software.amazon.awssdk.services.ssm.model.GetParametersRequest;
 import software.amazon.awssdk.services.ssm.model.GetParametersResponse;
 import software.amazon.awssdk.services.ssm.model.Parameter;
 
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class LambdaContextHolder {
+public class LambdaContextHolder implements Resource {
 
     private static final Map<String, String> SSM_TO_PROPERTY = Map.of(
             "/hrbot/datasource/url",      "SPRING_DATASOURCE_URL",
@@ -28,6 +31,7 @@ public class LambdaContextHolder {
     private static final ConfigurableApplicationContext context;
 
     static {
+        Core.getGlobalContext().register(new LambdaContextHolder());
         loadSecretsFromSsm();
         log.info("Initializing Spring context...");
         context = new SpringApplicationBuilder(HrVacancyBotApplication.class)
@@ -38,6 +42,15 @@ public class LambdaContextHolder {
 
     public static <T> T getBean(Class<T> type) {
         return context.getBean(type);
+    }
+
+    @Override
+    public void beforeCheckpoint(Context<? extends Resource> ctx) {}
+
+    @Override
+    public void afterRestore(Context<? extends Resource> ctx) {
+        loadSecretsFromSsm();
+        context.getBean(MessageSender.class).reloadToken(System.getProperty("BOT_TOKEN"));
     }
 
     private static void loadSecretsFromSsm() {
