@@ -1,6 +1,7 @@
 package com.hrbot.lambda;
 
 import com.hrbot.HrVacancyBotApplication;
+import com.hrbot.bot.DeploymentNotifier;
 import com.hrbot.bot.MessageSender;
 import lombok.extern.slf4j.Slf4j;
 import org.crac.Context;
@@ -51,6 +52,7 @@ public class LambdaContextHolder implements Resource {
     public void afterRestore(Context<? extends Resource> ctx) {
         loadSecretsFromSsm();
         context.getBean(MessageSender.class).reloadToken(System.getProperty("BOT_TOKEN"));
+        context.getBean(DeploymentNotifier.class).notifyDeployment();
     }
 
     private static void loadSecretsFromSsm() {
