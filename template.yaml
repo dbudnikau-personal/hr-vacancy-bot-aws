@@ -86,6 +86,7 @@ Resources:
                 - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/datasource/password"
                 - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/bot/token"
                 - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/deepseek/api-key"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/admin/chat-id"
             - Effect: Allow
               Action: ssm:GetParameter
               Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/wellfound/*"
