@@ -14,7 +14,7 @@ public class ScannerLambda implements RequestHandler<Map<String, Object>, Void> 
     private final VacancyScanScheduler scanner;
 
     public ScannerLambda() {
-        this.scanner = LambdaContextHolder.getBean(VacancyScanScheduler.class);
+        this(LambdaContextHolder.vacancyScanScheduler);
     }
 
     public ScannerLambda(VacancyScanScheduler scanner) {
