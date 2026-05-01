@@ -30,6 +30,8 @@ public class LambdaContextHolder implements Resource {
     );
 
     private static final ConfigurableApplicationContext context;
+    private static final MessageSender messageSender;
+    private static final DeploymentNotifier deploymentNotifier;
 
     static {
         Core.getGlobalContext().register(new LambdaContextHolder());
@@ -38,6 +40,8 @@ public class LambdaContextHolder implements Resource {
         context = new SpringApplicationBuilder(HrVacancyBotApplication.class)
                 .web(WebApplicationType.NONE)
                 .run();
+        messageSender = context.getBean(MessageSender.class);
+        deploymentNotifier = context.getBean(DeploymentNotifier.class);
         log.info("Spring context initialized");
     }
 
@@ -51,8 +55,8 @@ public class LambdaContextHolder implements Resource {
     @Override
     public void afterRestore(Context<? extends Resource> ctx) {
         loadSecretsFromSsm();
-        context.getBean(MessageSender.class).reloadToken(System.getProperty("BOT_TOKEN"));
-        context.getBean(DeploymentNotifier.class).notifyDeployment();
+        messageSender.reloadToken(System.getProperty("BOT_TOKEN"));
+        deploymentNotifier.notifyDeployment();
     }
 
     private static void loadSecretsFromSsm() {
