@@ -14,10 +14,6 @@ Parameters:
     Type: String
     Default: local
     Description: Git commit SHA injected by CI
-  AdminChatId:
-    Type: String
-    Default: "0"
-    Description: Telegram chat ID to notify on deployment
 
 Resources:
   BotHandlerFunction:
@@ -36,7 +32,6 @@ Resources:
       Environment:
         Variables:
           SCANNER_FUNCTION_NAME: !Sub "${VacancyScannerFunction.Arn}:live"
-          ADMIN_CHAT_ID: !Ref AdminChatId
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
@@ -51,6 +46,7 @@ Resources:
                 - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/datasource/password"
                 - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/bot/token"
                 - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/deepseek/api-key"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/admin/chat-id"
             - Effect: Allow
               Action: kms:Decrypt
               Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
