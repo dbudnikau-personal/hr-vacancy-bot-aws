@@ -45,7 +45,9 @@ public class BotHandlerLambda implements RequestHandler<APIGatewayV2HTTPEvent, A
 
     @Override
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
-        if (pendingNotification.getAsBoolean()) {
+        boolean notify = pendingNotification.getAsBoolean();
+        log.info("handleRequest: pendingNotification={}, ADMIN_CHAT_ID={}", notify, System.getProperty("ADMIN_CHAT_ID", "not set"));
+        if (notify) {
             deploymentNotifier.notifyDeployment();
         }
         try {
