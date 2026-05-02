@@ -19,6 +19,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.ssm.SsmClient;
+import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
+import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 
 import java.util.Map;
 
@@ -27,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -45,6 +49,14 @@ class LambdaIntegrationTest {
         @Bean
         LambdaClient lambdaClient() {
             return mock(LambdaClient.class);
+        }
+
+        @Bean
+        SsmClient ssmClient() {
+            SsmClient mock = mock(SsmClient.class);
+            when(mock.getParameter(any(GetParameterRequest.class)))
+                    .thenThrow(ParameterNotFoundException.builder().message("not found in test").build());
+            return mock;
         }
     }
 
@@ -67,7 +79,8 @@ class LambdaIntegrationTest {
     void allCommandsRegistered() {
         assertThat(commandRouter.getCommands()).containsKeys(
                 "/help", "/vacancies", "/report", "/scan",
-                "/filters", "/addfilter", "/removefilter", "/status"
+                "/filters", "/addfilter", "/removefilter", "/status",
+                "/stopscan", "/startscan"
         );
     }
 
