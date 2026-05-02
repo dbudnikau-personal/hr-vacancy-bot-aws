@@ -1,5 +1,6 @@
 package com.hrbot.bot.callback;
 
+import com.hrbot.bot.MessageSender;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -14,10 +15,12 @@ import java.util.stream.Collectors;
 public class CallbackRouter {
 
     private final Map<String, CallbackHandler> handlers;
+    private final MessageSender messageSender;
 
-    public CallbackRouter(List<CallbackHandler> handlerList) {
+    public CallbackRouter(List<CallbackHandler> handlerList, MessageSender messageSender) {
         this.handlers = handlerList.stream()
                 .collect(Collectors.toMap(CallbackHandler::getPrefix, Function.identity()));
+        this.messageSender = messageSender;
     }
 
     public void route(CallbackQuery callbackQuery) {
@@ -28,7 +31,8 @@ public class CallbackRouter {
             log.debug("Routing callback [{}] from chatId={}", prefix, callbackQuery.getMessage().getChatId());
             handler.handle(callbackQuery, data);
         } else {
-            log.debug("Unknown callback prefix [{}]", prefix);
+            log.debug("Unknown callback prefix [{}], answering noop", prefix);
+            messageSender.answerCallback(callbackQuery.getId());
         }
     }
 }

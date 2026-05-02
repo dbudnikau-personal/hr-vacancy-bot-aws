@@ -2,7 +2,6 @@ package com.hrbot.lambda;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrbot.HrVacancyBotApplication;
-import com.hrbot.bot.DeploymentNotifier;
 import com.hrbot.bot.MessageSender;
 import com.hrbot.bot.callback.CallbackRouter;
 import com.hrbot.bot.command.CommandRouter;
@@ -38,10 +37,7 @@ public class LambdaContextHolder implements Resource {
     static final CallbackRouter callbackRouter;
     static final ObjectMapper objectMapper;
     static final VacancyScanScheduler vacancyScanScheduler;
-    static final DeploymentNotifier deploymentNotifier;
     private static final MessageSender messageSender;
-    private static volatile boolean pendingNotification = false;
-
     static {
         Core.getGlobalContext().register(new LambdaContextHolder());
         loadSecretsFromSsm();
@@ -54,7 +50,6 @@ public class LambdaContextHolder implements Resource {
         objectMapper = context.getBean(ObjectMapper.class);
         vacancyScanScheduler = context.getBean(VacancyScanScheduler.class);
         messageSender = context.getBean(MessageSender.class);
-        deploymentNotifier = context.getBean(DeploymentNotifier.class);
         log.info("Spring context initialized");
     }
 
@@ -65,13 +60,6 @@ public class LambdaContextHolder implements Resource {
     public void afterRestore(Context<? extends Resource> ctx) {
         loadSecretsFromSsm();
         messageSender.reloadToken(System.getProperty("BOT_TOKEN"));
-        pendingNotification = true;
-    }
-
-    public static boolean consumePendingNotification() {
-        if (!pendingNotification) return false;
-        pendingNotification = false;
-        return true;
     }
 
     private static void loadSecretsFromSsm() {

@@ -3,7 +3,6 @@ package com.hrbot;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hrbot.bot.DeploymentNotifier;
 import com.hrbot.bot.MessageSender;
 import com.hrbot.bot.callback.CallbackRouter;
 import com.hrbot.bot.command.CommandRouter;
@@ -53,7 +52,6 @@ class LambdaIntegrationTest {
 
     @Autowired CommandRouter commandRouter;
     @Autowired CallbackRouter callbackRouter;
-    @Autowired DeploymentNotifier deploymentNotifier;
     @Autowired VacancyScanScheduler vacancyScanScheduler;
     @Autowired ObjectMapper objectMapper;
 
@@ -89,7 +87,7 @@ class LambdaIntegrationTest {
                 }
                 """;
 
-        BotHandlerLambda handler = new BotHandlerLambda(commandRouter, callbackRouter, objectMapper, deploymentNotifier);
+        BotHandlerLambda handler = new BotHandlerLambda(commandRouter, callbackRouter, objectMapper);
         APIGatewayV2HTTPEvent event = APIGatewayV2HTTPEvent.builder().withBody(updateJson).build();
 
         APIGatewayV2HTTPResponse response = handler.handleRequest(event, null);
@@ -112,7 +110,7 @@ class LambdaIntegrationTest {
                 }
                 """;
 
-        BotHandlerLambda handler = new BotHandlerLambda(commandRouter, callbackRouter, objectMapper, deploymentNotifier);
+        BotHandlerLambda handler = new BotHandlerLambda(commandRouter, callbackRouter, objectMapper);
         APIGatewayV2HTTPEvent event = APIGatewayV2HTTPEvent.builder().withBody(updateJson).build();
 
         assertThatNoException().isThrownBy(() -> handler.handleRequest(event, null));
@@ -121,7 +119,7 @@ class LambdaIntegrationTest {
     @Test
     void botHandler_malformedBody_returns200WithoutCrashing() {
         APIGatewayV2HTTPEvent event = APIGatewayV2HTTPEvent.builder().withBody("not json").build();
-        BotHandlerLambda handler = new BotHandlerLambda(commandRouter, callbackRouter, objectMapper, deploymentNotifier);
+        BotHandlerLambda handler = new BotHandlerLambda(commandRouter, callbackRouter, objectMapper);
 
         APIGatewayV2HTTPResponse response = handler.handleRequest(event, null);
 
