@@ -48,6 +48,11 @@ Resources:
             - Effect: Allow
               Action: kms:Decrypt
               Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+                - ssm:PutParameter
+              Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/scanning/paused"
       Events:
         WebhookApi:
           Type: HttpApi
@@ -89,7 +94,9 @@ Resources:
                 - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/admin/chat-id"
             - Effect: Allow
               Action: ssm:GetParameter
-              Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/wellfound/*"
+              Resource:
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/wellfound/*"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/scanning/paused"
             - Effect: Allow
               Action: kms:Decrypt
               Resource: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"

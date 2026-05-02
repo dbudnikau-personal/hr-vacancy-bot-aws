@@ -39,6 +39,8 @@ public class HelpCommand implements BotCommand {
                 <b>Control:</b>
                 • <code>/scan</code> — scan all active filters
                 • <code>/scan &lt;filter_id&gt;</code> — scan specific filter
+                • <code>/stopscan</code> — disable automatic and manual scanning
+                • <code>/startscan</code> — re-enable scanning
                 • <code>/status</code> — parser health status
                 • <code>/help</code> — this message
 
