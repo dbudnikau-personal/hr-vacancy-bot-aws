@@ -2,7 +2,6 @@ package com.hrbot.lambda;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrbot.HrVacancyBotApplication;
-import com.hrbot.bot.DeploymentNotifier;
 import com.hrbot.bot.MessageSender;
 import com.hrbot.bot.callback.CallbackRouter;
 import com.hrbot.bot.command.CommandRouter;
@@ -38,7 +37,6 @@ public class LambdaContextHolder implements Resource {
     static final CallbackRouter callbackRouter;
     static final ObjectMapper objectMapper;
     static final VacancyScanScheduler vacancyScanScheduler;
-    static final DeploymentNotifier deploymentNotifier;
     private static final MessageSender messageSender;
     static {
         Core.getGlobalContext().register(new LambdaContextHolder());
@@ -52,7 +50,6 @@ public class LambdaContextHolder implements Resource {
         objectMapper = context.getBean(ObjectMapper.class);
         vacancyScanScheduler = context.getBean(VacancyScanScheduler.class);
         messageSender = context.getBean(MessageSender.class);
-        deploymentNotifier = context.getBean(DeploymentNotifier.class);
         log.info("Spring context initialized");
     }
 
