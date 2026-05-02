@@ -40,8 +40,6 @@ public class LambdaContextHolder implements Resource {
     static final VacancyScanScheduler vacancyScanScheduler;
     static final DeploymentNotifier deploymentNotifier;
     private static final MessageSender messageSender;
-    private static volatile boolean pendingNotification = false;
-
     static {
         Core.getGlobalContext().register(new LambdaContextHolder());
         loadSecretsFromSsm();
@@ -65,13 +63,6 @@ public class LambdaContextHolder implements Resource {
     public void afterRestore(Context<? extends Resource> ctx) {
         loadSecretsFromSsm();
         messageSender.reloadToken(System.getProperty("BOT_TOKEN"));
-        pendingNotification = true;
-    }
-
-    public static boolean consumePendingNotification() {
-        if (!pendingNotification) return false;
-        pendingNotification = false;
-        return true;
     }
 
     private static void loadSecretsFromSsm() {
