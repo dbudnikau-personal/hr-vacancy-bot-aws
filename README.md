@@ -116,9 +116,18 @@ cp .env.example .env
 | `/scan <filter_id>` | Trigger manual scan for a specific filter |
 | `/stopscan` | Disable automatic and manual scanning |
 | `/startscan` | Re-enable scanning |
+| `/interval` | Show current scan schedule |
+| `/interval <Nm\|Nh\|Nd>` | Set scan schedule (e.g. `30m`, `6h`, `1d`) |
 | `/status` | Show parser health status |
 | `/version` | Show deployed version |
 | `/help` | Show available commands |
+
+### Scan Schedule
+
+Default schedule is `rate(3 days)` (defined in `template.yaml` as the `ScanScheduleRule` EventBridge rule).
+`/interval Nm|Nh|Nd` updates the rule directly via `events:PutRule`. The change persists until the next
+`sam deploy`, which resets the rule back to the template default — re-run `/interval` after deployment if
+you've customized the schedule. Minimum interval is 1 minute (EventBridge limit).
 
 ### Filter Examples
 
