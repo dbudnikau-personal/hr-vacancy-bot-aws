@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.services.eventbridge.EventBridgeClient;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.ssm.SsmClient;
 
@@ -44,6 +45,13 @@ public class AppConfig {
     @Bean
     public SsmClient ssmClient() {
         return SsmClient.builder()
+                .httpClient(UrlConnectionHttpClient.create())
+                .build();
+    }
+
+    @Bean
+    public EventBridgeClient eventBridgeClient() {
+        return EventBridgeClient.builder()
                 .httpClient(UrlConnectionHttpClient.create())
                 .build();
     }
