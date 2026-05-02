@@ -90,6 +90,18 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>eventbridge</artifactId>
+            <version>${aws.sdk.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <!-- CRaC API for SnapStart afterRestore hook (implementation provided by Lambda runtime) -->
         <dependency>
             <groupId>org.crac</groupId>
