@@ -74,16 +74,6 @@ jobs:
             --parameter-overrides \
               "BotVersion=${GITHUB_SHA::7}"
 
-      - name: Notify deployment
-        run: |
-          BOT_TOKEN=$(aws ssm get-parameter --name /hrbot/bot/token --with-decryption --query Parameter.Value --output text)
-          echo "::add-mask::$BOT_TOKEN"
-          ADMIN_CHAT_ID=$(aws ssm get-parameter --name /hrbot/admin/chat-id --with-decryption --query Parameter.Value --output text)
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${ADMIN_CHAT_ID}" \
-            -d "text=HR Vacancy Bot v${GITHUB_SHA::7} deployed" \
-            | jq -e '.ok == true'
-
       - name: Register Telegram webhook
         run: |
           BOT_TOKEN=$(aws ssm get-parameter --name /hrbot/bot/token --with-decryption --query Parameter.Value --output text)
@@ -93,6 +83,16 @@ jobs:
           RESULT=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" -d "url=${WEBHOOK_URL}")
           echo "setWebhook result: $(echo $RESULT | jq -r .description)"
           echo $RESULT | jq -e '.ok == true'
+
+      - name: Notify deployment
+        run: |
+          BOT_TOKEN=$(aws ssm get-parameter --name /hrbot/bot/token --with-decryption --query Parameter.Value --output text)
+          echo "::add-mask::$BOT_TOKEN"
+          ADMIN_CHAT_ID=$(aws ssm get-parameter --name /hrbot/admin/chat-id --with-decryption --query Parameter.Value --output text)
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${ADMIN_CHAT_ID}" \
+            -d "text=HR Vacancy Bot v${GITHUB_SHA::7} deployed" \
+            | jq -e '.ok == true'
 
       - name: Set CloudWatch log retention
         run: |
