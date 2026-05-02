@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrbot.bot.MessageSender;
 import com.hrbot.model.VacancyFilter;
 import com.hrbot.service.FilterService;
+import com.hrbot.service.ScanningStateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ public class ScanCommand implements BotCommand {
     private final FilterService filterService;
     private final LambdaClient lambdaClient;
     private final ObjectMapper objectMapper;
+    private final ScanningStateService scanningStateService;
 
     @Value("${scanner.function.name}")
     private String scannerFunctionName;
@@ -39,6 +41,11 @@ public class ScanCommand implements BotCommand {
     @Override
     public void handle(Message message, String[] args) {
         long chatId = message.getChatId();
+
+        if (scanningStateService.isPaused()) {
+            sender.sendText(chatId, "⏸ Scanning is currently disabled. Use /startscan to re-enable.");
+            return;
+        }
 
         List<VacancyFilter> filters;
 

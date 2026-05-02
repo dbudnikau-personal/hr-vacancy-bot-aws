@@ -114,6 +114,8 @@ cp .env.example .env
 | `/report <site>` | Export vacancies for a site to CSV |
 | `/scan` | Trigger manual scan for all active filters |
 | `/scan <filter_id>` | Trigger manual scan for a specific filter |
+| `/stopscan` | Disable automatic and manual scanning |
+| `/startscan` | Re-enable scanning |
 | `/status` | Show parser health status |
 | `/version` | Show deployed version |
 | `/help` | Show available commands |
