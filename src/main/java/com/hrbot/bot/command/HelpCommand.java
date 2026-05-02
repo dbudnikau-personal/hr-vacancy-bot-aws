@@ -41,6 +41,8 @@ public class HelpCommand implements BotCommand {
                 • <code>/scan &lt;filter_id&gt;</code> — scan specific filter
                 • <code>/stopscan</code> — disable automatic and manual scanning
                 • <code>/startscan</code> — re-enable scanning
+                • <code>/interval</code> — show current scan schedule
+                • <code>/interval &lt;Nm|Nh|Nd&gt;</code> — set schedule (e.g. 30m, 6h, 1d)
                 • <code>/status</code> — parser health status
                 • <code>/help</code> — this message
 
