@@ -30,6 +30,7 @@ Resources:
         Variables:
           GIT_SHA: !Ref BotVersion
           SCANNER_FUNCTION_NAME: !Sub "${VacancyScannerFunction.Arn}:live"
+          SCAN_SCHEDULE_RULE_NAME: hr-vacancy-bot-scan-schedule
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:
@@ -53,6 +54,11 @@ Resources:
                 - ssm:GetParameter
                 - ssm:PutParameter
               Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hrbot/scanning/paused"
+            - Effect: Allow
+              Action:
+                - events:DescribeRule
+                - events:PutRule
+              Resource: !GetAtt ScanScheduleRule.Arn
       Events:
         WebhookApi:
           Type: HttpApi
@@ -103,12 +109,25 @@ Resources:
             - Effect: Allow
               Action: lambda:InvokeFunction
               Resource: !GetAtt CookieRefresherFunction.Arn
-      Events:
-        ScanSchedule:
-          Type: Schedule
-          Properties:
-            Schedule: rate(2 hours)
-            Enabled: true
+
+  ScanScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: hr-vacancy-bot-scan-schedule
+      Description: Triggers VacancyScannerFunction on a configurable interval (default 3 days)
+      ScheduleExpression: rate(3 days)
+      State: ENABLED
+      Targets:
+        - Id: VacancyScannerTarget
+          Arn: !Sub "${VacancyScannerFunction.Arn}:live"
+
+  ScanScheduleRulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Sub "${VacancyScannerFunction.Arn}:live"
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScanScheduleRule.Arn
 
   CookieRefresherFunction:
     Type: AWS::Serverless::Function

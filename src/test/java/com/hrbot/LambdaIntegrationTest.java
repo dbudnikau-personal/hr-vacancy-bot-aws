@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
+import software.amazon.awssdk.services.eventbridge.EventBridgeClient;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
@@ -58,6 +59,11 @@ class LambdaIntegrationTest {
                     .thenThrow(ParameterNotFoundException.builder().message("not found in test").build());
             return mock;
         }
+
+        @Bean
+        EventBridgeClient eventBridgeClient() {
+            return mock(EventBridgeClient.class);
+        }
     }
 
     @MockitoBean MessageSender messageSender;
@@ -80,7 +86,7 @@ class LambdaIntegrationTest {
         assertThat(commandRouter.getCommands()).containsKeys(
                 "/help", "/vacancies", "/report", "/scan",
                 "/filters", "/addfilter", "/removefilter", "/status",
-                "/stopscan", "/startscan"
+                "/stopscan", "/startscan", "/interval"
         );
     }
 
