@@ -11,43 +11,34 @@ import com.hrbot.bot.command.CommandRouter;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.util.function.BooleanSupplier;
-
 @Slf4j
 public class BotHandlerLambda implements RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
+
+    // false in snapshot → true after first notification per restore cycle
+    private static volatile boolean notificationSent = false;
 
     private final CommandRouter commandRouter;
     private final CallbackRouter callbackRouter;
     private final ObjectMapper objectMapper;
     private final DeploymentNotifier deploymentNotifier;
-    private final BooleanSupplier pendingNotification;
 
     public BotHandlerLambda() {
         this(LambdaContextHolder.commandRouter, LambdaContextHolder.callbackRouter,
-                LambdaContextHolder.objectMapper, LambdaContextHolder.deploymentNotifier,
-                LambdaContextHolder::consumePendingNotification);
+                LambdaContextHolder.objectMapper, LambdaContextHolder.deploymentNotifier);
     }
 
     public BotHandlerLambda(CommandRouter commandRouter, CallbackRouter callbackRouter,
                              ObjectMapper objectMapper, DeploymentNotifier deploymentNotifier) {
-        this(commandRouter, callbackRouter, objectMapper, deploymentNotifier, () -> false);
-    }
-
-    BotHandlerLambda(CommandRouter commandRouter, CallbackRouter callbackRouter,
-                     ObjectMapper objectMapper, DeploymentNotifier deploymentNotifier,
-                     BooleanSupplier pendingNotification) {
         this.commandRouter = commandRouter;
         this.callbackRouter = callbackRouter;
         this.objectMapper = objectMapper;
         this.deploymentNotifier = deploymentNotifier;
-        this.pendingNotification = pendingNotification;
     }
 
     @Override
     public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent event, Context context) {
-        boolean notify = pendingNotification.getAsBoolean();
-        log.info("handleRequest: pendingNotification={}, ADMIN_CHAT_ID={}", notify, System.getProperty("ADMIN_CHAT_ID", "not set"));
-        if (notify) {
+        if (!notificationSent) {
+            notificationSent = true;
             deploymentNotifier.notifyDeployment();
         }
         try {
