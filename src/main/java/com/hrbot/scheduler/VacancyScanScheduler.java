@@ -4,6 +4,7 @@ import com.hrbot.model.ScanResult;
 import com.hrbot.model.VacancyFilter;
 import com.hrbot.service.FilterService;
 import com.hrbot.service.NotificationService;
+import com.hrbot.service.ScanningStateService;
 import com.hrbot.service.VacancyService;
 import com.hrbot.bot.MessageSender;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +28,16 @@ public class VacancyScanScheduler {
     private final VacancyService vacancyService;
     private final NotificationService notificationService;
     private final MessageSender messageSender;
+    private final ScanningStateService scanningStateService;
 
     private record SiteScanTask(VacancyFilter filter, String siteKey, CompletableFuture<ScanResult> future) {}
 
     @Scheduled(cron = "${bot.scan.cron:0 0 */2 * * *}")
     public void scan() {
+        if (scanningStateService.isPaused()) {
+            log.info("Scanning is paused, skipping scheduled scan");
+            return;
+        }
         List<VacancyFilter> filters = filterService.getAllActiveFilters();
         log.info("Starting vacancy scan for {} active filters", filters.size());
 
@@ -95,6 +101,11 @@ public class VacancyScanScheduler {
     }
 
     public void scanForChat(long chatId, List<Long> filterIds) {
+        if (scanningStateService.isPaused()) {
+            log.info("Scanning is paused, skipping manual scan for chatId={}", chatId);
+            messageSender.sendText(chatId, "⏸ Scanning is currently disabled. Use /startscan to re-enable.");
+            return;
+        }
         List<VacancyFilter> filters = filterIds.isEmpty()
                 ? filterService.getActiveFiltersForChat(chatId)
                 : filterIds.stream()
