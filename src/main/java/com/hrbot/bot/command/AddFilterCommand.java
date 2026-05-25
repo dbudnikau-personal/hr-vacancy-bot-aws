@@ -71,8 +71,8 @@ public class AddFilterCommand implements BotCommand {
 
         String name      = parsed[1];
         String keywords  = parsed[2];
-        String location  = parsed.length > 3 ? emptyToNull(parsed[3]) : null;
-        String salaryMin = parsed.length > 4 ? emptyToNull(parsed[4]) : null;
+        String location  = parsed.length > 3 ? blankToNull(parsed[3]) : null;
+        String salaryMin = parsed.length > 4 ? blankToNull(parsed[4]) : null;
         List<String> sites = parsed.length > 5
                 ? Arrays.asList(parsed[5].split(","))
                 : parserRegistry.availableSites();
@@ -127,7 +127,7 @@ public class AddFilterCommand implements BotCommand {
         return tokens.toArray(new String[0]);
     }
 
-    private String emptyToNull(String s) {
+    private String blankToNull(String s) {
         return (s == null || s.isBlank() || s.equals("\"\"") || s.equals("''")) ? null : s;
     }
 }

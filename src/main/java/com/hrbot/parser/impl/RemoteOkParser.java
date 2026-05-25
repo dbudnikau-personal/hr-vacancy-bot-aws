@@ -43,9 +43,9 @@ public class RemoteOkParser implements SiteParser {
 
             for (Element item : items) {
                 try {
-                    Vacancy v = parseItem(item);
-                    if (matchesKeywords(v, keywords)) {
-                        results.add(v);
+                    Vacancy vacancy = parseItem(item);
+                    if (matchesKeywords(vacancy, keywords)) {
+                        results.add(vacancy);
                     }
                 } catch (Exception e) {
                     log.warn("RemoteOK: failed to parse item: {}", e.getMessage());
@@ -101,13 +101,13 @@ public class RemoteOkParser implements SiteParser {
                 .build();
     }
 
-    private boolean matchesKeywords(Vacancy v, String keywords) {
+    private boolean matchesKeywords(Vacancy vacancy, String keywords) {
         if (keywords == null || keywords.isBlank()) {
             return true;
         }
-        String kw = keywords.toLowerCase();
-        String searchable = (v.getTitle() + " " + v.getDescription()).toLowerCase();
-        return searchable.contains(kw);
+        String lowercaseKeyword = keywords.toLowerCase();
+        String searchable = (vacancy.getTitle() + " " + vacancy.getDescription()).toLowerCase();
+        return searchable.contains(lowercaseKeyword);
     }
 
     private String text(Element parent, String tag) {
