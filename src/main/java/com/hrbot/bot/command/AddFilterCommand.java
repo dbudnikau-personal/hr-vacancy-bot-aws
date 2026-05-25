@@ -30,7 +30,9 @@ public class AddFilterCommand implements BotCommand {
     private final ParserRegistry parserRegistry;
 
     private static String escape(String text) {
-        if (text == null) return "";
+        if (text == null) {
+            return "";
+        }
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
@@ -112,9 +114,15 @@ public class AddFilterCommand implements BotCommand {
                 .compile("\"([^\"]*)\"|'([^']*)'|(\\S+)")
                 .matcher(text);
         while (m.find()) {
-            if (m.group(1) != null)      tokens.add(m.group(1));
-            else if (m.group(2) != null) tokens.add(m.group(2));
-            else                          tokens.add(m.group(3));
+            if (m.group(1) != null) {
+                tokens.add(m.group(1));
+            }
+            else if (m.group(2) != null) {
+                tokens.add(m.group(2));
+            }
+            else {
+                tokens.add(m.group(3));
+            }
         }
         return tokens.toArray(new String[0]);
     }

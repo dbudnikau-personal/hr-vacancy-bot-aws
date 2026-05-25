@@ -19,7 +19,9 @@ public class RemoveFilterCommand implements BotCommand {
     private final FilterService filterService;
 
     private static String escape(String text) {
-        if (text == null) return "";
+        if (text == null) {
+            return "";
+        }
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 

@@ -18,7 +18,9 @@ public class ParserRegistry {
 
     public SiteParser getParser(String siteKey) {
         SiteParser parser = parsers.get(siteKey);
-        if (parser == null) throw new IllegalArgumentException("No parser for site: " + siteKey);
+        if (parser == null) {
+            throw new IllegalArgumentException("No parser for site: " + siteKey);
+        }
         return parser;
     }
 

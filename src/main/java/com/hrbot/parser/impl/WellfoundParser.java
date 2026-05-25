@@ -78,7 +78,9 @@ public class WellfoundParser implements SiteParser {
     /*
     private List<Vacancy> parseImpl(VacancyFilter filter) {
         refreshCookies();
-        if (!loadCookies()) return List.of();
+        if (!loadCookies()) {
+            return List.of();
+        }
 
         List<Vacancy> results = new ArrayList<>();
         String url = buildUrl(filter);
@@ -95,13 +97,17 @@ public class WellfoundParser implements SiteParser {
                 }
 
                 List<Vacancy> pageVacancies = parsePage(doc);
-                if (pageVacancies.isEmpty()) break;
+                if (pageVacancies.isEmpty()) {
+                    break;
+                }
 
                 results.addAll(pageVacancies);
                 url = getNextPageUrl(doc);
                 page++;
 
-                if (url != null) Thread.sleep(1000);
+                if (url != null) {
+                    Thread.sleep(1000);
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -223,9 +229,13 @@ public class WellfoundParser implements SiteParser {
 
     private String extractCompany(Element group) {
         Element prev = group.previousElementSibling();
-        if (prev == null) return "N/A";
+        if (prev == null) {
+            return "N/A";
+        }
         String text = prev.text();
-        if (text.isBlank()) return "N/A";
+        if (text.isBlank()) {
+            return "N/A";
+        }
         return text.split("\n")[0].split("Actively")[0].split("Top")[0].trim();
     }
 
@@ -248,17 +258,23 @@ public class WellfoundParser implements SiteParser {
 
     private String extractSalary(Element link) {
         Element container = link.parent() != null ? link.parent().parent() : null;
-        if (container == null) return null;
+        if (container == null) {
+            return null;
+        }
         for (Element el : container.getAllElements()) {
             String text = el.ownText().trim();
-            if (text.matches(".*\\$\\d+.*")) return text;
+            if (text.matches(".*\\$\\d+.*")) {
+                return text;
+            }
         }
         return null;
     }
 
     private String getNextPageUrl(Document doc) {
         Element next = doc.selectFirst(PAGINATION_NEXT);
-        if (next == null) return null;
+        if (next == null) {
+            return null;
+        }
         String href = next.attr("href");
         return href.startsWith("http") ? href : BASE_URL + href;
     }
