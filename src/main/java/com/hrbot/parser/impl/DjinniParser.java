@@ -101,7 +101,7 @@ public class DjinniParser implements SiteParser {
                 .get();
     }
 
-    private List<Vacancy> parsePage(Document doc) {
+    List<Vacancy> parsePage(Document doc) {
         List<Vacancy> vacancies = new ArrayList<>();
         Elements cards = doc.select(JOB_CARD);
         log.debug("Djinni: found {} cards on page", cards.size());

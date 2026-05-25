@@ -122,7 +122,7 @@ public class HhParser implements SiteParser {
                 .get();
     }
 
-    private List<Vacancy> parsePage(Document doc) {
+    List<Vacancy> parsePage(Document doc) {
         List<Vacancy> vacancies = new ArrayList<>();
         Elements cards = doc.select(VACANCY_CARD);
 

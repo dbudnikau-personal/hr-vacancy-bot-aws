@@ -122,7 +122,7 @@ public class GetmatchParser implements SiteParser {
         return objectMapper.readTree(response.body());
     }
 
-    private Vacancy mapVacancy(JsonNode offer) {
+    Vacancy mapVacancy(JsonNode offer) {
         String id = offer.path("id").asText();
 
         // Use url field from response if available, fallback to id
@@ -161,7 +161,7 @@ public class GetmatchParser implements SiteParser {
                 .build();
     }
 
-    private String extractLocation(JsonNode offer) {
+    String extractLocation(JsonNode offer) {
         JsonNode items = offer.path("location_items");
         if (!items.isArray() || items.isEmpty()) {
             return null;
@@ -178,7 +178,7 @@ public class GetmatchParser implements SiteParser {
         return locations.isEmpty() ? null : String.join(", ", locations);
     }
 
-    private String formatSalary(JsonNode offer) {
+    String formatSalary(JsonNode offer) {
         if (offer.path("salary_hidden").asBoolean(false)) {
             return null;
         }
