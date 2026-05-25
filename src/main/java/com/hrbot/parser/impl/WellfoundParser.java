@@ -175,7 +175,7 @@ public class WellfoundParser implements SiteParser {
                 .get();
     }
 
-    private List<Vacancy> parsePage(Document doc) {
+    List<Vacancy> parsePage(Document doc) {
         List<Vacancy> vacancies = new ArrayList<>();
         Elements groups = doc.select(JOB_GROUP);
         log.debug("Wellfound: found {} job groups on page", groups.size());
