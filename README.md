@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/dbudnikau-personal/hr-vacancy-bot-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/dbudnikau-personal/hr-vacancy-bot-aws/actions/workflows/ci.yml)
 
+![Demo](docs/demo.gif)
+
 A Telegram bot that monitors job vacancy sites and notifies about new vacancies based on configurable filters. Runs on AWS Lambda.
 
 ## Features
