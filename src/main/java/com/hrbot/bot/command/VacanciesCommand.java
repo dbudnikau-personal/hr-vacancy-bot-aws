@@ -1,6 +1,7 @@
 package com.hrbot.bot.command;
 
 import com.hrbot.bot.MessageSender;
+import com.hrbot.bot.TelegramEscape;
 import com.hrbot.bot.callback.CallbackHandler;
 import com.hrbot.model.Vacancy;
 import com.hrbot.repository.VacancyRepository;
@@ -70,20 +71,20 @@ public class VacanciesCommand implements BotCommand, CallbackHandler {
 
         int totalPages = result.getTotalPages();
         long total = result.getTotalElements();
-        String searchLabel = keyword != null ? "🔍 <code>" + escape(keyword) + "</code>" : "📋 all";
+        String searchLabel = keyword != null ? "🔍 <code>" + TelegramEscape.html(keyword) + "</code>" : "📋 all";
 
         StringBuilder sb = new StringBuilder();
         sb.append("💼 <b>Vacancies</b> (%s) — page %d/%d, total: %d\n\n"
                 .formatted(searchLabel, page + 1, totalPages, total));
 
         for (Vacancy v : result.getContent()) {
-            sb.append("▪️ <a href=\"%s\">%s</a>\n".formatted(v.getUrl(), escape(v.getTitle())));
-            sb.append("   🏢 %s".formatted(escape(v.getCompany())));
+            sb.append("▪️ <a href=\"%s\">%s</a>\n".formatted(v.getUrl(), TelegramEscape.html(v.getTitle())));
+            sb.append("   🏢 %s".formatted(TelegramEscape.html(v.getCompany())));
             if (v.getSalary() != null) {
-                sb.append(" · 💰 %s".formatted(escape(v.getSalary())));
+                sb.append(" · 💰 %s".formatted(TelegramEscape.html(v.getSalary())));
             }
             if (v.getLocation() != null) {
-                sb.append(" · 📍 %s".formatted(escape(v.getLocation())));
+                sb.append(" · 📍 %s".formatted(TelegramEscape.html(v.getLocation())));
             }
             sb.append(" · <i>%s</i>".formatted(v.getSiteKey()));
             sb.append("\n\n");
@@ -126,10 +127,4 @@ public class VacanciesCommand implements BotCommand, CallbackHandler {
         return input.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 
-    private String escape(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
 }
