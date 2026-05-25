@@ -17,10 +17,20 @@ public class LambdaTaskDispatcher implements AsyncTaskDispatcher {
 
     @Override
     public void dispatch(String functionName, String payload) {
-        log.debug("Dispatching async task to Lambda '{}', payload length={}", functionName, payload.length());
+        log.debug("Dispatching async task to Lambda '{}'", functionName);
         lambdaClient.invoke(InvokeRequest.builder()
                 .functionName(functionName)
                 .invocationType(InvocationType.EVENT)
+                .payload(SdkBytes.fromUtf8String(payload))
+                .build());
+    }
+
+    @Override
+    public void invokeSync(String functionName, String payload) {
+        log.debug("Invoking Lambda '{}' synchronously", functionName);
+        lambdaClient.invoke(InvokeRequest.builder()
+                .functionName(functionName)
+                .invocationType(InvocationType.REQUEST_RESPONSE)
                 .payload(SdkBytes.fromUtf8String(payload))
                 .build());
     }
