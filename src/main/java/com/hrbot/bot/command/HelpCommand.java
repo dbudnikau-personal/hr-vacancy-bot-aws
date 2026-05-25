@@ -44,13 +44,16 @@ public class HelpCommand implements BotCommand {
                 • <code>/interval</code> — show current scan schedule
                 • <code>/interval &lt;Nm|Nh|Nd&gt;</code> — set schedule (e.g. 30m, 6h, 1d)
                 • <code>/status</code> — parser health status
+                • <code>/version</code> — show deployed version
                 • <code>/help</code> — this message
 
                 <b>Available sites:</b>
-                <code>djinni, hh, getmatch, wellfound</code>
+                <code>djinni, hh, getmatch, linkedin, indeed, jobbank, remoteok, weworkremotely, remotive</code>
+                <i>wellfound — temporarily disabled (session cookie migration pending)</i>
 
                 <b>Examples:</b>
                 <code>/addfilter java-remote "Java Spring" "" 3000 djinni,hh,getmatch</code>
+                <code>/addfilter remote-java Java "" "" remoteok,weworkremotely,remotive</code>
                 <code>/scan 1</code>
                 <code>/vacancies java</code>
                 """);
