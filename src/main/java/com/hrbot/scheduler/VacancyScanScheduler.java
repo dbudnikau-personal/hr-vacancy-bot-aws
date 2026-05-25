@@ -1,12 +1,13 @@
 package com.hrbot.scheduler;
 
+import com.hrbot.bot.MessageSender;
 import com.hrbot.model.ScanResult;
 import com.hrbot.model.VacancyFilter;
 import com.hrbot.service.FilterService;
 import com.hrbot.service.NotificationService;
+import com.hrbot.service.ScanSummaryReporter;
 import com.hrbot.service.ScanningStateService;
 import com.hrbot.service.VacancyService;
-import com.hrbot.bot.MessageSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +28,7 @@ public class VacancyScanScheduler {
     private final FilterService filterService;
     private final VacancyService vacancyService;
     private final NotificationService notificationService;
+    private final ScanSummaryReporter summaryReporter;
     private final MessageSender messageSender;
     private final ScanningStateService scanningStateService;
 
@@ -73,10 +75,12 @@ public class VacancyScanScheduler {
                     filterUpdated += updatedCount;
                     notificationService.notify(filter, result);
                     siteParts.add("<code>%s</code> %d→%d🆕%d🔄".formatted(task.siteKey(), foundCount, newCount, updatedCount));
-                    log.info("Filter [{}] site [{}]: {} found, {} new, {} updated", filter.getName(), task.siteKey(), foundCount, newCount, updatedCount);
+                    log.info("Filter [{}] site [{}]: {} found, {} new, {} updated",
+                            filter.getName(), task.siteKey(), foundCount, newCount, updatedCount);
                 } catch (Exception e) {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    log.error("Scan failed for filter [{}] site [{}]: {}", filter.getName(), task.siteKey(), cause.getMessage());
+                    log.error("Scan failed for filter [{}] site [{}]: {}",
+                            filter.getName(), task.siteKey(), cause.getMessage());
                     siteParts.add("<code>%s</code> ❌".formatted(task.siteKey()));
                 }
             }
@@ -90,13 +94,7 @@ public class VacancyScanScheduler {
             totals[2] += filterUpdated;
         }
 
-        chatTotals.forEach((chatId, totals) -> {
-            String header = "✅ Scan complete: <b>%d found</b>, %d new, %d updated"
-                    .formatted(totals[0], totals[1], totals[2]);
-            String details = String.join("\n", chatFilterLines.getOrDefault(chatId, List.of()));
-            messageSender.sendText(chatId, header + "\n\n" + details);
-        });
-
+        summaryReporter.report(chatTotals, chatFilterLines);
         log.info("Scan complete");
     }
 
@@ -127,11 +125,11 @@ public class VacancyScanScheduler {
                 messageSender.sendText(chatId, "⏳ Scanning <code>%s</code>...".formatted(siteKey));
                 try {
                     ScanResult result = vacancyService.scanSingleSite(filter, siteKey);
-                    int foundCount = result.getTotalFound();
-                    int newCount = result.getNewVacancies().size();
+                    int foundCount   = result.getTotalFound();
+                    int newCount     = result.getNewVacancies().size();
                     int updatedCount = result.getUpdatedVacancies().size();
-                    totalFound += foundCount;
-                    totalNew += newCount;
+                    totalFound   += foundCount;
+                    totalNew     += newCount;
                     totalUpdated += updatedCount;
 
                     notificationService.notify(filter, result);
