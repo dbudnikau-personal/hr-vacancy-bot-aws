@@ -69,14 +69,6 @@ public class WellfoundParser implements SiteParser {
 
     @Override
     public List<Vacancy> parse(VacancyFilter filter) {
-        // TODO: store _wellfound session cookie in SSM at /hrbot/wellfound/session,
-        //       then re-enable by removing this stub and uncommenting the full implementation below
-        log.warn("Wellfound parser is temporarily disabled — session cookie not yet migrated to SSM");
-        return List.of();
-    }
-
-    /*
-    private List<Vacancy> parseImpl(VacancyFilter filter) {
         refreshCookies();
         if (!loadCookies()) {
             return List.of();
@@ -120,7 +112,6 @@ public class WellfoundParser implements SiteParser {
         log.info("Wellfound: found {} vacancies for filter [{}]", results.size(), filter.getName());
         return results;
     }
-    */
 
     private void refreshCookies() {
         try {
@@ -203,7 +194,7 @@ public class WellfoundParser implements SiteParser {
                 .header("Sec-Fetch-Dest", "document")
                 .cookie("datadome", cachedDatadome)
                 .cookie("cf_clearance", cachedCfClearance)
-                .cookie("_wellfound", cachedWellfound) // TODO: loaded from SSM_SESSION once migration is complete
+                .cookie("_wellfound", cachedWellfound)
                 .timeout(8_000)
                 .get();
     }

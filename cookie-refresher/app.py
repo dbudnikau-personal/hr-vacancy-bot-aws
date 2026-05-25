@@ -7,8 +7,9 @@ logger.setLevel(logging.INFO)
 
 ssm = boto3.client('ssm')
 
-SSM_DATADOME   = '/hrbot/wellfound/datadome'
+SSM_DATADOME     = '/hrbot/wellfound/datadome'
 SSM_CF_CLEARANCE = '/hrbot/wellfound/cf-clearance'
+SSM_SESSION      = '/hrbot/wellfound/session'
 
 TARGET_URL = 'https://wellfound.com/role/r/software-engineer'
 
@@ -49,18 +50,20 @@ def handler(event, context):
         cookies = ctx.cookies()
         cookie_map = {c['name']: c['value'] for c in cookies}
 
-        datadome    = cookie_map.get('datadome', '')
+        datadome     = cookie_map.get('datadome', '')
         cf_clearance = cookie_map.get('cf_clearance', '')
+        session      = cookie_map.get('_wellfound', '')
 
-        logger.info('Cookies extracted — datadome=%s cf_clearance=%s',
-                    bool(datadome), bool(cf_clearance))
+        logger.info('Cookies extracted — datadome=%s cf_clearance=%s _wellfound=%s',
+                    bool(datadome), bool(cf_clearance), bool(session))
 
         browser.close()
 
-    _put_ssm(SSM_DATADOME,    datadome)
+    _put_ssm(SSM_DATADOME,     datadome)
     _put_ssm(SSM_CF_CLEARANCE, cf_clearance)
+    _put_ssm(SSM_SESSION,      session)
 
-    result = {'datadome': bool(datadome), 'cf_clearance': bool(cf_clearance)}
+    result = {'datadome': bool(datadome), 'cf_clearance': bool(cf_clearance), '_wellfound': bool(session)}
     logger.info('Cookie refresh complete: %s', result)
     return result
 
