@@ -28,7 +28,10 @@ public class VacancyService {
 
     public ScanResult scanForFilter(VacancyFilter filter) {
         List<Vacancy> allFound = new ArrayList<>();
-        for (String siteKey : filter.getSites()) {
+        List<String> sites = filter.getSites() != null && !filter.getSites().isEmpty()
+                ? filter.getSites()
+                : parserRegistry.availableSites();
+        for (String siteKey : sites) {
             try {
                 SiteParser parser = parserRegistry.getParser(siteKey);
                 List<Vacancy> vacancies = parser.parse(filter);
