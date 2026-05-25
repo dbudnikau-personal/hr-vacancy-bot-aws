@@ -29,6 +29,11 @@ public class AddFilterCommand implements BotCommand {
     private final FilterService filterService;
     private final ParserRegistry parserRegistry;
 
+    private static String escape(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
     @Override
     public String getCommand() { return "/addfilter"; }
 
@@ -91,11 +96,11 @@ public class AddFilterCommand implements BotCommand {
                 🌐 Sites: <code>%s</code>
                 🆔 Filter ID: <code>%d</code>
                 """.formatted(
-                saved.getName(),
-                saved.getKeywords(),
-                saved.getLocation() != null ? saved.getLocation() : "any",
-                saved.getSalaryMin() != null ? saved.getSalaryMin() : "any",
-                String.join(", ", saved.getSites()),
+                escape(saved.getName()),
+                escape(saved.getKeywords()),
+                saved.getLocation() != null ? escape(saved.getLocation()) : "any",
+                saved.getSalaryMin() != null ? escape(saved.getSalaryMin()) : "any",
+                escape(String.join(", ", saved.getSites())),
                 saved.getId()
         ));
     }

@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -39,6 +38,7 @@ public class WellfoundParser implements SiteParser {
 
     private static final String SSM_DATADOME     = "/hrbot/wellfound/datadome";
     private static final String SSM_CF_CLEARANCE = "/hrbot/wellfound/cf-clearance";
+    private static final String SSM_SESSION      = "/hrbot/wellfound/session";
 
     private static final int MAX_PAGES = 2;
 
@@ -69,10 +69,16 @@ public class WellfoundParser implements SiteParser {
 
     @Override
     public List<Vacancy> parse(VacancyFilter filter) {
+        // TODO: store _wellfound session cookie in SSM at /hrbot/wellfound/session,
+        //       then re-enable by removing this stub and uncommenting the full implementation below
+        log.warn("Wellfound parser is temporarily disabled — session cookie not yet migrated to SSM");
+        return List.of();
+    }
+
+    /*
+    private List<Vacancy> parseImpl(VacancyFilter filter) {
         refreshCookies();
-        if (!loadCookies()) {
-            return List.of();
-        }
+        if (!loadCookies()) return List.of();
 
         List<Vacancy> results = new ArrayList<>();
         String url = buildUrl(filter);
@@ -108,6 +114,7 @@ public class WellfoundParser implements SiteParser {
         log.info("Wellfound: found {} vacancies for filter [{}]", results.size(), filter.getName());
         return results;
     }
+    */
 
     private void refreshCookies() {
         try {
@@ -129,12 +136,10 @@ public class WellfoundParser implements SiteParser {
             return false;
         }
         try {
-            String datadome    = getParam(SSM_DATADOME);
-            String cfClearance = getParam(SSM_CF_CLEARANCE);
+            this.cachedDatadome    = getParam(SSM_DATADOME);
+            this.cachedCfClearance = getParam(SSM_CF_CLEARANCE);
+            this.cachedWellfound   = getParam(SSM_SESSION);
             log.info("Wellfound cookies loaded from SSM");
-            // store for use in fetchPage
-            this.cachedDatadome    = datadome;
-            this.cachedCfClearance = cfClearance;
             return true;
         } catch (ParameterNotFoundException e) {
             log.warn("Wellfound SSM cookies not found — cookie-refresher may have failed");
@@ -147,6 +152,7 @@ public class WellfoundParser implements SiteParser {
 
     private String cachedDatadome;
     private String cachedCfClearance;
+    private String cachedWellfound;
 
     private String getParam(String name) {
         return ssmClient.getParameter(GetParameterRequest.builder()
@@ -191,7 +197,7 @@ public class WellfoundParser implements SiteParser {
                 .header("Sec-Fetch-Dest", "document")
                 .cookie("datadome", cachedDatadome)
                 .cookie("cf_clearance", cachedCfClearance)
-                .cookie("_wellfound", "aed8f90b70f262fc4db13a6283910118.o")
+                .cookie("_wellfound", cachedWellfound) // TODO: loaded from SSM_SESSION once migration is complete
                 .timeout(8_000)
                 .get();
     }
@@ -199,7 +205,7 @@ public class WellfoundParser implements SiteParser {
     private List<Vacancy> parsePage(Document doc) {
         List<Vacancy> vacancies = new ArrayList<>();
         Elements groups = doc.select(JOB_GROUP);
-        log.debug("Wellfound: found {} job groups on page", Optional.of(groups.size()));
+        log.debug("Wellfound: found {} job groups on page", groups.size());
 
         for (Element group : groups) {
             String company = extractCompany(group);
