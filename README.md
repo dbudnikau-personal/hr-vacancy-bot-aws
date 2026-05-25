@@ -20,7 +20,7 @@ A Telegram bot that monitors job vacancy sites and notifies about new vacancies 
 | [Getmatch](https://getmatch.ru) | HTML scraping (Jsoup) |
 | [LinkedIn](https://linkedin.com) | HTML scraping (Jsoup) |
 | [Indeed](https://indeed.com) | HTML scraping (Jsoup) |
-| [Wellfound](https://wellfound.com) | Playwright (cookie-refresher Lambda) |
+| [Wellfound](https://wellfound.com) | Playwright (cookie-refresher Lambda) — **temporarily disabled** |
 | [Job Bank Canada](https://jobbank.gc.ca) | Atom feed |
 | [RemoteOK](https://remoteok.com) | HTML scraping (Jsoup) |
 | [We Work Remotely](https://weworkremotely.com) | HTML scraping (Jsoup) |
@@ -52,7 +52,7 @@ API Gateway → BotHandlerLambda
                     ├── GetmatchParser
                     ├── LinkedInParser
                     ├── IndeedParser
-                    ├── WellfoundParser ──→ CookieRefresherLambda (Python/Playwright)
+                    ├── WellfoundParser (disabled — awaiting SSM cookie migration)
                     ├── JobBankParser
                     ├── RemoteOkParser
                     ├── WeWorkRemotelyParser
@@ -194,6 +194,9 @@ src/main/java/com/hrbot/
 │       ├── RemoveFilterCommand.java
 │       ├── VacanciesCommand.java
 │       ├── ScanCommand.java
+│       ├── StopScanCommand.java
+│       ├── StartScanCommand.java
+│       ├── IntervalCommand.java
 │       ├── ReportCommand.java
 │       ├── StatusCommand.java
 │       ├── VersionCommand.java
