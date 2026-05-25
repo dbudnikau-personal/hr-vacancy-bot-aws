@@ -4,7 +4,7 @@
 
 ### Bot — AWS Lambda
 - **BotHandlerLambda** — handles Telegram webhook, invoked via API Gateway (HTTP API)
-- **ScannerLambda** — runs vacancy scan, invoked by BotHandler or EventBridge schedule (every 2h)
+- **ScannerLambda** — runs vacancy scan, invoked by BotHandler or EventBridge schedule (default: every 3 days, configurable via `/interval`)
 - **CookieRefresherLambda** — Python/Playwright Lambda, refreshes Wellfound session cookies
 - Region: `eu-central-1`
 - Runtime: Java 21 with SnapStart enabled
@@ -50,7 +50,7 @@ Push to `master` — GitHub Actions runs tests then deploys via SAM.
 cp .env.example .env
 # Fill in .env
 
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ## Notes
