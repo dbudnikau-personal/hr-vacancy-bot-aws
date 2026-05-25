@@ -72,7 +72,7 @@ public class RemotiveParser implements SiteParser {
         return results;
     }
 
-    private Vacancy parseJob(JsonNode job) {
+    Vacancy parseJob(JsonNode job) {
         String title    = job.path("title").asText();
         String company  = job.path("company_name").asText("N/A");
         String url      = job.path("url").asText();
