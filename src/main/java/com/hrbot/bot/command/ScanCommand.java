@@ -32,6 +32,11 @@ public class ScanCommand implements BotCommand {
     @Value("${scanner.function.name}")
     private String scannerFunctionName;
 
+    private static String escape(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
     @Override
     public String getCommand() { return "/scan"; }
 
@@ -54,7 +59,7 @@ public class ScanCommand implements BotCommand {
                 long filterId = Long.parseLong(args[0].trim());
                 VacancyFilter filter = filterService.findById(filterId);
 
-                if (filter == null) {
+                if (filter == null || !filter.getChatId().equals(chatId)) {
                     sender.sendText(chatId, "❌ Filter <code>%d</code> not found.".formatted(filterId));
                     return;
                 }
@@ -64,7 +69,7 @@ public class ScanCommand implements BotCommand {
                 }
                 filters = List.of(filter);
             } catch (NumberFormatException e) {
-                sender.sendText(chatId, "❌ Invalid filter ID: <code>%s</code>. Use /filters to see IDs.".formatted(args[0]));
+                sender.sendText(chatId, "❌ Invalid filter ID: <code>%s</code>. Use /filters to see IDs.".formatted(escape(args[0])));
                 return;
             }
         } else {
