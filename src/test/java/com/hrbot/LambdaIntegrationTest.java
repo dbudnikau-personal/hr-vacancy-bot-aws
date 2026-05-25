@@ -86,7 +86,7 @@ class LambdaIntegrationTest {
         assertThat(commandRouter.getCommands()).containsKeys(
                 "/help", "/vacancies", "/report", "/scan",
                 "/filters", "/addfilter", "/removefilter", "/status",
-                "/stopscan", "/startscan", "/interval"
+                "/stopscan", "/startscan", "/interval", "/version"
         );
     }
 
