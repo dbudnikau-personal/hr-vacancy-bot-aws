@@ -1,5 +1,7 @@
 # HR Vacancy Bot
 
+[![CI](https://github.com/dbudnikau-personal/hr-vacancy-bot-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/dbudnikau-personal/hr-vacancy-bot-aws/actions/workflows/ci.yml)
+
 A Telegram bot that monitors job vacancy sites and notifies about new vacancies based on configurable filters. Runs on AWS Lambda.
 
 ## Features
@@ -238,4 +240,4 @@ cookie-refresher/         — Python Lambda, refreshes Wellfound cookies via Pla
 
 ## License
 
-MIT
+[MIT](LICENSE)
