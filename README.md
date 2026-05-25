@@ -102,6 +102,12 @@ cp .env.example .env
 ./scripts/deploy.sh
 ```
 
+## Access
+
+This is a personal bot — it is not intended for public use and there is no user registration flow.
+Access control is handled at the infrastructure level: the bot token is private and the webhook endpoint is not publicly advertised.
+All commands operate on the `chat_id` of the caller, so one user's filters and data are always isolated from another's.
+
 ## Bot Commands
 
 | Command | Description |
