@@ -15,15 +15,12 @@ public interface VacancyRepository extends JpaRepository<Vacancy, Long> {
 
     boolean existsByUrl(String url);
 
-    Page<Vacancy> findByTitleContainingIgnoreCaseOrCompanyContainingIgnoreCase(
-            String title, String company, Pageable pageable);
-
     Page<Vacancy> findBySiteKey(String siteKey, Pageable pageable);
 
     List<Vacancy> findBySiteKeyOrderByFoundAtDesc(String siteKey);
 
     @Query("SELECT v FROM Vacancy v WHERE " +
-            "(:keyword IS NULL OR LOWER(v.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "OR LOWER(v.company) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Vacancy> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+            "LOWER(v.title) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '!' " +
+            "OR LOWER(v.company) LIKE LOWER(CONCAT('%', :keyword, '%')) ESCAPE '!'")
+    Page<Vacancy> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

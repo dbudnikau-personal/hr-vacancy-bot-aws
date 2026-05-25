@@ -1,6 +1,7 @@
 package com.hrbot.bot.command;
 
 import com.hrbot.bot.MessageSender;
+import com.hrbot.model.VacancyFilter;
 import com.hrbot.service.FilterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,11 @@ public class RemoveFilterCommand implements BotCommand {
 
     private final MessageSender sender;
     private final FilterService filterService;
+
+    private static String escape(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
 
     @Override
     public String getCommand() { return "/removefilter"; }
@@ -34,10 +40,15 @@ public class RemoveFilterCommand implements BotCommand {
 
         try {
             long filterId = Long.parseLong(args[0].trim());
+            VacancyFilter filter = filterService.findById(filterId);
+            if (filter == null || !filter.getChatId().equals(chatId)) {
+                sender.sendText(chatId, "❌ Filter not found.");
+                return;
+            }
             filterService.deactivate(filterId);
             sender.sendText(chatId, "✅ Filter <code>%d</code> deactivated.".formatted(filterId));
         } catch (NumberFormatException e) {
-            sender.sendText(chatId, "❌ Invalid ID: <code>%s</code>. Use /filters to see IDs.".formatted(args[0]));
+            sender.sendText(chatId, "❌ Invalid ID: <code>%s</code>. Use /filters to see IDs.".formatted(escape(args[0])));
         }
     }
 }

@@ -2,6 +2,7 @@ package com.hrbot.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -26,10 +27,11 @@ public class VacancyFilter {
     private String location;
     private String salaryMin;
 
+    @Builder.Default
     @ElementCollection
     @CollectionTable(name = "filter_sites", joinColumns = @JoinColumn(name = "filter_id"))
     @Column(name = "site_key")
-    private List<String> sites;
+    private List<String> sites = new ArrayList<>();
 
     private boolean active;
 }

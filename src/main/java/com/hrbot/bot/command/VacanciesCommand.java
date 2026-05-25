@@ -60,7 +60,7 @@ public class VacanciesCommand implements BotCommand, CallbackHandler {
         PageRequest pageRequest = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "foundAt"));
 
         Page<Vacancy> result = keyword != null
-                ? vacancyRepository.findByTitleContainingIgnoreCaseOrCompanyContainingIgnoreCase(keyword, keyword, pageRequest)
+                ? vacancyRepository.findByKeyword(escapeLike(keyword), pageRequest)
                 : vacancyRepository.findAll(pageRequest);
 
         if (result.isEmpty()) {
@@ -116,6 +116,10 @@ public class VacanciesCommand implements BotCommand, CallbackHandler {
         }
 
         return new InlineKeyboardMarkup(List.of(new InlineKeyboardRow(buttons)));
+    }
+
+    private static String escapeLike(String input) {
+        return input.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
 
     private String escape(String text) {

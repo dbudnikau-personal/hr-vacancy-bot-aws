@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -44,7 +43,7 @@ public class DjinniParser implements SiteParser {
 
         while (url != null && page <= MAX_PAGES) {
             try {
-                log.debug("Fetching Djinni page {}: {}", Optional.of(page), url);
+                log.debug("Fetching Djinni page {}: {}", page, url);
                 Document doc = fetchPage(url);
                 List<Vacancy> pageVacancies = parsePage(doc);
 
@@ -59,12 +58,12 @@ public class DjinniParser implements SiteParser {
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception e) {
-                log.error("Djinni parse error on page {}: {}", Optional.of(page), e.getMessage());
+                log.error("Djinni parse error on page {}: {}", page, e.getMessage());
                 break;
             }
         }
 
-        log.info("Djinni: found {} vacancies for filter [{}]", Optional.of(results.size()), filter.getName());
+        log.info("Djinni: found {} vacancies for filter [{}]", results.size(), filter.getName());
         return results;
     }
 
@@ -103,7 +102,7 @@ public class DjinniParser implements SiteParser {
     private List<Vacancy> parsePage(Document doc) {
         List<Vacancy> vacancies = new ArrayList<>();
         Elements cards = doc.select(JOB_CARD);
-        log.debug("Djinni: found {} cards on page", Optional.of(cards.size()));
+        log.debug("Djinni: found {} cards on page", cards.size());
 
         for (Element card : cards) {
             try {
