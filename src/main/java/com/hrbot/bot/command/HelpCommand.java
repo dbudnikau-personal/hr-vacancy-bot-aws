@@ -48,8 +48,7 @@ public class HelpCommand implements BotCommand {
                 • <code>/help</code> — this message
 
                 <b>Available sites:</b>
-                <code>djinni, hh, getmatch, linkedin, indeed, jobbank, remoteok, weworkremotely, remotive</code>
-                <i>wellfound — temporarily disabled (session cookie migration pending)</i>
+                <code>djinni, hh, getmatch, linkedin, indeed, wellfound, jobbank, remoteok, weworkremotely, remotive</code>
 
                 <b>Examples:</b>
                 <code>/addfilter java-remote "Java Spring" "" 3000 djinni,hh,getmatch</code>

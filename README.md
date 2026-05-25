@@ -20,7 +20,7 @@ A Telegram bot that monitors job vacancy sites and notifies about new vacancies 
 | [Getmatch](https://getmatch.ru) | HTML scraping (Jsoup) |
 | [LinkedIn](https://linkedin.com) | HTML scraping (Jsoup) |
 | [Indeed](https://indeed.com) | HTML scraping (Jsoup) |
-| [Wellfound](https://wellfound.com) | Playwright (cookie-refresher Lambda) — **temporarily disabled** |
+| [Wellfound](https://wellfound.com) | Playwright (cookie-refresher Lambda) |
 | [Job Bank Canada](https://jobbank.gc.ca) | Atom feed |
 | [RemoteOK](https://remoteok.com) | HTML scraping (Jsoup) |
 | [We Work Remotely](https://weworkremotely.com) | HTML scraping (Jsoup) |
@@ -52,7 +52,7 @@ API Gateway → BotHandlerLambda
                     ├── GetmatchParser
                     ├── LinkedInParser
                     ├── IndeedParser
-                    ├── WellfoundParser (disabled — awaiting SSM cookie migration)
+                    ├── WellfoundParser ──→ CookieRefresherLambda (Python/Playwright)
                     ├── JobBankParser
                     ├── RemoteOkParser
                     ├── WeWorkRemotelyParser
