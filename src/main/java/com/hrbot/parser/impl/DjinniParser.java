@@ -47,7 +47,9 @@ public class DjinniParser implements SiteParser {
                 Document doc = fetchPage(url);
                 List<Vacancy> pageVacancies = parsePage(doc);
 
-                if (pageVacancies.isEmpty()) break;
+                if (pageVacancies.isEmpty()) {
+                    break;
+                }
 
                 results.addAll(pageVacancies);
                 url = getNextPageUrl(doc);
@@ -141,10 +143,14 @@ public class DjinniParser implements SiteParser {
 
     private String getNextPageUrl(Document doc) {
         Element next = doc.selectFirst(PAGINATION_NEXT);
-        if (next == null) return null;
+        if (next == null) {
+            return null;
+        }
         String href = next.attr("href");
         // Skip if it's disabled (#)
-        if (href.equals("#") || href.isBlank()) return null;
+        if (href.equals("#") || href.isBlank()) {
+            return null;
+        }
         return href.startsWith("http") ? href : BASE_URL + "/jobs/" + href;
     }
 

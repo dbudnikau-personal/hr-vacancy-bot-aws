@@ -79,8 +79,12 @@ public class VacanciesCommand implements BotCommand, CallbackHandler {
         for (Vacancy v : result.getContent()) {
             sb.append("▪️ <a href=\"%s\">%s</a>\n".formatted(v.getUrl(), escape(v.getTitle())));
             sb.append("   🏢 %s".formatted(escape(v.getCompany())));
-            if (v.getSalary() != null) sb.append(" · 💰 %s".formatted(escape(v.getSalary())));
-            if (v.getLocation() != null) sb.append(" · 📍 %s".formatted(escape(v.getLocation())));
+            if (v.getSalary() != null) {
+                sb.append(" · 💰 %s".formatted(escape(v.getSalary())));
+            }
+            if (v.getLocation() != null) {
+                sb.append(" · 📍 %s".formatted(escape(v.getLocation())));
+            }
             sb.append(" · <i>%s</i>".formatted(v.getSiteKey()));
             sb.append("\n\n");
         }
@@ -123,7 +127,9 @@ public class VacanciesCommand implements BotCommand, CallbackHandler {
     }
 
     private String escape(String text) {
-        if (text == null) return "";
+        if (text == null) {
+            return "";
+        }
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }
