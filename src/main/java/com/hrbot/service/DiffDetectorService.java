@@ -33,9 +33,9 @@ public class DiffDetectorService {
 
         // Deduplicate incoming list by URL before processing
         Map<String, Vacancy> deduped = new LinkedHashMap<>();
-        for (Vacancy v : incoming) {
-            if (v.getUrl() != null && !v.getUrl().contains("adsrv")) {
-                deduped.putIfAbsent(v.getUrl(), v);
+        for (Vacancy vacancy : incoming) {
+            if (vacancy.getUrl() != null && !vacancy.getUrl().contains("adsrv")) {
+                deduped.putIfAbsent(vacancy.getUrl(), vacancy);
             }
         }
 

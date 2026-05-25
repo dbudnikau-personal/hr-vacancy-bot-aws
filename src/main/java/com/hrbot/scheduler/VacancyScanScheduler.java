@@ -65,15 +65,15 @@ public class VacancyScanScheduler {
             for (SiteScanTask task : filterTasks) {
                 try {
                     ScanResult result = task.future().join();
-                    int f = result.getTotalFound();
-                    int n = result.getNewVacancies().size();
-                    int u = result.getUpdatedVacancies().size();
-                    filterFound += f;
-                    filterNew += n;
-                    filterUpdated += u;
+                    int foundCount   = result.getTotalFound();
+                    int newCount     = result.getNewVacancies().size();
+                    int updatedCount = result.getUpdatedVacancies().size();
+                    filterFound   += foundCount;
+                    filterNew     += newCount;
+                    filterUpdated += updatedCount;
                     notificationService.notify(filter, result);
-                    siteParts.add("<code>%s</code> %d→%d🆕%d🔄".formatted(task.siteKey(), f, n, u));
-                    log.info("Filter [{}] site [{}]: {} found, {} new, {} updated", filter.getName(), task.siteKey(), f, n, u);
+                    siteParts.add("<code>%s</code> %d→%d🆕%d🔄".formatted(task.siteKey(), foundCount, newCount, updatedCount));
+                    log.info("Filter [{}] site [{}]: {} found, {} new, {} updated", filter.getName(), task.siteKey(), foundCount, newCount, updatedCount);
                 } catch (Exception e) {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;
                     log.error("Scan failed for filter [{}] site [{}]: {}", filter.getName(), task.siteKey(), cause.getMessage());

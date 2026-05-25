@@ -46,9 +46,9 @@ public class VacanciesCommand implements BotCommand, CallbackHandler {
     @Override
     public void handle(CallbackQuery callbackQuery, String data) {
         // data format: "vac:PAGE" or "vac:PAGE:kw:KEYWORD"
-        String[] parts = data.split(":", 4);
-        int page = Integer.parseInt(parts[1]);
-        String keyword = parts.length == 4 && "kw".equals(parts[2]) ? parts[3] : null;
+        String[] callbackParts = data.split(":", 4);
+        int page = Integer.parseInt(callbackParts[1]);
+        String keyword = callbackParts.length == 4 && "kw".equals(callbackParts[2]) ? callbackParts[3] : null;
 
         long chatId = callbackQuery.getMessage().getChatId();
         int messageId = callbackQuery.getMessage().getMessageId();
@@ -70,11 +70,11 @@ public class VacanciesCommand implements BotCommand, CallbackHandler {
 
         int totalPages = result.getTotalPages();
         long total = result.getTotalElements();
-        String context = keyword != null ? "🔍 <code>" + escape(keyword) + "</code>" : "📋 all";
+        String searchLabel = keyword != null ? "🔍 <code>" + escape(keyword) + "</code>" : "📋 all";
 
         StringBuilder sb = new StringBuilder();
         sb.append("💼 <b>Vacancies</b> (%s) — page %d/%d, total: %d\n\n"
-                .formatted(context, page + 1, totalPages, total));
+                .formatted(searchLabel, page + 1, totalPages, total));
 
         for (Vacancy v : result.getContent()) {
             sb.append("▪️ <a href=\"%s\">%s</a>\n".formatted(v.getUrl(), escape(v.getTitle())));
