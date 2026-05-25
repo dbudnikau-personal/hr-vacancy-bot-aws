@@ -91,7 +91,9 @@ public class NotificationService {
 
     // Escape HTML special chars for Telegram parseMode=HTML
     private String escape(String text) {
-        if (text == null) return "";
+        if (text == null) {
+            return "";
+        }
         return text
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")

@@ -87,7 +87,9 @@ public class WeWorkRemotelyParser implements SiteParser {
     }
 
     private boolean matchesKeywords(Vacancy v, String keywords) {
-        if (keywords == null || keywords.isBlank()) return true;
+        if (keywords == null || keywords.isBlank()) {
+            return true;
+        }
         String kw = keywords.toLowerCase();
         String searchable = (v.getTitle() + " " + v.getDescription()).toLowerCase();
         return searchable.contains(kw);

@@ -50,7 +50,9 @@ public class GetmatchParser implements SiteParser {
                 JsonNode response = fetchJson(url);
                 JsonNode offers = response.path("offers");
 
-                if (!offers.isArray() || offers.isEmpty()) break;
+                if (!offers.isArray() || offers.isEmpty()) {
+                    break;
+                }
 
                 for (JsonNode offer : offers) {
                     try {
@@ -61,7 +63,9 @@ public class GetmatchParser implements SiteParser {
                 }
 
                 int total = response.path("meta").path("total").asInt(0);
-                if (offset + LIMIT >= total) break;
+                if (offset + LIMIT >= total) {
+                    break;
+                }
 
                 Thread.sleep(500);
             } catch (InterruptedException e) {
@@ -134,7 +138,9 @@ public class GetmatchParser implements SiteParser {
         String description = offer.path("offer_description").asText(null);
         if (description != null) {
             description = description.replaceAll("<[^>]+>", "").trim();
-            if (description.length() > 300) description = description.substring(0, 300) + "…";
+            if (description.length() > 300) {
+                description = description.substring(0, 300) + "…";
+            }
         }
 
         // Location from location_items
@@ -157,7 +163,9 @@ public class GetmatchParser implements SiteParser {
 
     private String extractLocation(JsonNode offer) {
         JsonNode items = offer.path("location_items");
-        if (!items.isArray() || items.isEmpty()) return null;
+        if (!items.isArray() || items.isEmpty()) {
+            return null;
+        }
 
         List<String> locations = new ArrayList<>();
         for (JsonNode item : items) {
@@ -171,20 +179,30 @@ public class GetmatchParser implements SiteParser {
     }
 
     private String formatSalary(JsonNode offer) {
-        if (offer.path("salary_hidden").asBoolean(false)) return null;
+        if (offer.path("salary_hidden").asBoolean(false)) {
+            return null;
+        }
 
         JsonNode from    = offer.path("salary_display_from");
         JsonNode to      = offer.path("salary_display_to");
         String currency  = offer.path("salary_currency").asText("RUB");
 
-        if (from.isNull() && to.isNull()) return null;
+        if (from.isNull() && to.isNull()) {
+            return null;
+        }
 
         String fromStr = from.isNull() ? null : String.valueOf(from.asInt());
         String toStr   = to.isNull()   ? null : String.valueOf(to.asInt());
 
-        if (fromStr != null && toStr != null) return fromStr + "–" + toStr + " " + currency;
-        if (fromStr != null) return "from " + fromStr + " " + currency;
-        if (toStr   != null) return "up to " + toStr + " " + currency;
+        if (fromStr != null && toStr != null) {
+            return fromStr + "–" + toStr + " " + currency;
+        }
+        if (fromStr != null) {
+            return "from " + fromStr + " " + currency;
+        }
+        if (toStr   != null) {
+            return "up to " + toStr + " " + currency;
+        }
         return null;
     }
 

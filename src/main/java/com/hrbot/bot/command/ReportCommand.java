@@ -69,7 +69,9 @@ public class ReportCommand implements BotCommand {
     }
 
     private String csv(String value) {
-        if (value == null) return "";
+        if (value == null) {
+            return "";
+        }
         String escaped = value.replace("\"", "\"\"");
         return escaped.contains(",") || escaped.contains("\"") || escaped.contains("\n")
                 ? "\"" + escaped + "\""

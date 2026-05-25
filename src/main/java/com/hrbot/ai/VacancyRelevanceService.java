@@ -61,7 +61,9 @@ public class VacancyRelevanceService {
     }
 
     private String truncate(String text, int maxLength) {
-        if (text == null) return "";
+        if (text == null) {
+            return "";
+        }
         return text.length() > maxLength ? text.substring(0, maxLength) + "..." : text;
     }
 }
