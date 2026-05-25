@@ -52,7 +52,9 @@ public class IndeedParser implements SiteParser {
                     }
                 }
 
-                if (items.size() < LIMIT) break; // last page
+                if (items.size() < LIMIT) {
+                    break; // last page
+                }
 
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -118,7 +120,9 @@ public class IndeedParser implements SiteParser {
                 Element labelTd = b.parent();
                 if (labelTd != null) {
                     Element valueTd = labelTd.nextElementSibling();
-                    if (valueTd != null) return valueTd.text().trim();
+                    if (valueTd != null) {
+                        return valueTd.text().trim();
+                    }
                 }
             }
         }

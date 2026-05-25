@@ -51,7 +51,9 @@ public class HhParser implements SiteParser {
                 Document doc = fetchPage(url);
                 List<Vacancy> pageVacancies = parsePage(doc);
 
-                if (pageVacancies.isEmpty()) break;
+                if (pageVacancies.isEmpty()) {
+                    break;
+                }
 
                 results.addAll(pageVacancies);
                 url = getNextPageUrl(doc);
@@ -154,7 +156,9 @@ public class HhParser implements SiteParser {
 
         String href = linkEl != null ? linkEl.attr("href") : "";
         String url  = href.contains("?") ? href.substring(0, href.indexOf("?")) : href;
-        if (!url.startsWith("http")) url = BASE_URL + url;
+        if (!url.startsWith("http")) {
+            url = BASE_URL + url;
+        }
 
         return Vacancy.builder()
                 .title(title)
@@ -171,7 +175,9 @@ public class HhParser implements SiteParser {
 
     private String getNextPageUrl(Document doc) {
         Element next = doc.selectFirst(PAGINATION_NEXT);
-        if (next == null) return null;
+        if (next == null) {
+            return null;
+        }
         String href = next.attr("href");
         return href.startsWith("http") ? href : BASE_URL + href;
     }

@@ -30,7 +30,9 @@ public class AddFilterCommand implements BotCommand {
     private final ParserRegistry parserRegistry;
 
     private static String escape(String text) {
-        if (text == null) return "";
+        if (text == null) {
+            return "";
+        }
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
@@ -69,8 +71,8 @@ public class AddFilterCommand implements BotCommand {
 
         String name      = parsed[1];
         String keywords  = parsed[2];
-        String location  = parsed.length > 3 ? emptyToNull(parsed[3]) : null;
-        String salaryMin = parsed.length > 4 ? emptyToNull(parsed[4]) : null;
+        String location  = parsed.length > 3 ? blankToNull(parsed[3]) : null;
+        String salaryMin = parsed.length > 4 ? blankToNull(parsed[4]) : null;
         List<String> sites = parsed.length > 5
                 ? Arrays.asList(parsed[5].split(","))
                 : parserRegistry.availableSites();
@@ -112,14 +114,20 @@ public class AddFilterCommand implements BotCommand {
                 .compile("\"([^\"]*)\"|'([^']*)'|(\\S+)")
                 .matcher(text);
         while (m.find()) {
-            if (m.group(1) != null)      tokens.add(m.group(1));
-            else if (m.group(2) != null) tokens.add(m.group(2));
-            else                          tokens.add(m.group(3));
+            if (m.group(1) != null) {
+                tokens.add(m.group(1));
+            }
+            else if (m.group(2) != null) {
+                tokens.add(m.group(2));
+            }
+            else {
+                tokens.add(m.group(3));
+            }
         }
         return tokens.toArray(new String[0]);
     }
 
-    private String emptyToNull(String s) {
+    private String blankToNull(String s) {
         return (s == null || s.isBlank() || s.equals("\"\"") || s.equals("''")) ? null : s;
     }
 }

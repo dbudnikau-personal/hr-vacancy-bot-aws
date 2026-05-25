@@ -26,23 +26,23 @@ public class CommandRouter {
     public void route(Message message) {
         String text = message.getText().trim();
         String[] parts = text.split("\\s+", 2);
-        String cmd = parts[0].toLowerCase();
+        String command = parts[0].toLowerCase();
 
         // Strip bot mention: /start@mybotname -> /start
-        if (cmd.contains("@")) {
-            cmd = cmd.substring(0, cmd.indexOf("@"));
+        if (command.contains("@")) {
+            command = command.substring(0, command.indexOf("@"));
         }
 
         String[] args = parts.length > 1
                 ? parts[1].split("\\s+")
                 : new String[0];
 
-        BotCommand handler = commands.get(cmd);
+        BotCommand handler = commands.get(command);
         if (handler != null) {
-            log.debug("Routing command [{}] from chatId={}", cmd, message.getChatId());
+            log.debug("Routing command [{}] from chatId={}", command, message.getChatId());
             handler.handle(message, args);
         } else {
-            log.debug("Unknown command [{}] from chatId={}", cmd, message.getChatId());
+            log.debug("Unknown command [{}] from chatId={}", command, message.getChatId());
         }
     }
 

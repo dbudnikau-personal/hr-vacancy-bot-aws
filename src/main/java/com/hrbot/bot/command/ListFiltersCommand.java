@@ -41,10 +41,12 @@ public class ListFiltersCommand implements BotCommand {
         for (VacancyFilter f : filters) {
             sb.append("🔹 <b>%s</b> [ID: <code>%d</code>]\n".formatted(f.getName(), f.getId()));
             sb.append("   🔍 <code>%s</code>\n".formatted(f.getKeywords()));
-            if (f.getLocation() != null)
+            if (f.getLocation() != null) {
                 sb.append("   📍 %s\n".formatted(f.getLocation()));
-            if (f.getSalaryMin() != null)
+            }
+            if (f.getSalaryMin() != null) {
                 sb.append("   💰 from %s\n".formatted(f.getSalaryMin()));
+            }
             sb.append("   🌐 %s\n".formatted(String.join(", ", f.getSites())));
             sb.append("\n");
         }

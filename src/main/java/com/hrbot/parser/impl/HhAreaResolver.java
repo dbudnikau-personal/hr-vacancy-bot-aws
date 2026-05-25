@@ -51,10 +51,14 @@ public class HhAreaResolver {
      * Returns null if not resolved.
      */
     public String resolve(String location) {
-        if (location == null || location.isBlank()) return null;
+        if (location == null || location.isBlank()) {
+            return null;
+        }
 
         // Already numeric ID — use as-is
-        if (location.matches("\\d+")) return location;
+        if (location.matches("\\d+")) {
+            return location;
+        }
 
         return areaRepository.findByNameLower(location.trim().toLowerCase())
                 .map(HhArea::getId)

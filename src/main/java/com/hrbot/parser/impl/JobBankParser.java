@@ -56,7 +56,9 @@ public class JobBankParser implements SiteParser {
                     }
                 }
 
-                if (entries.size() < PAGE_SIZE) break; // last page
+                if (entries.size() < PAGE_SIZE) {
+                    break; // last page
+                }
 
                 Thread.sleep(500);
             } catch (InterruptedException e) {
@@ -84,7 +86,9 @@ public class JobBankParser implements SiteParser {
     private Vacancy parseEntry(Element entry) {
         String title = text(entry, "title");
         String url   = attr(entry, "link", "href");
-        if (url != null && url.startsWith("/")) url = BASE_URL + url;
+        if (url != null && url.startsWith("/")) {
+            url = BASE_URL + url;
+        }
 
         // <summary> contains HTML with job details
         String rawSummary = text(entry, "summary");
@@ -115,10 +119,14 @@ public class JobBankParser implements SiteParser {
             String text = el.ownText().trim();
             if (text.startsWith(label)) {
                 String value = text.substring(label.length()).trim();
-                if (!value.isEmpty()) return value;
+                if (!value.isEmpty()) {
+                    return value;
+                }
                 // value might be in next sibling
                 Element sibling = el.nextElementSibling();
-                if (sibling != null) return sibling.text().trim();
+                if (sibling != null) {
+                    return sibling.text().trim();
+                }
             }
         }
         return null;
