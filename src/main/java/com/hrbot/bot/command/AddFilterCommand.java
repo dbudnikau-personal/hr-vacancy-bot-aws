@@ -1,6 +1,7 @@
 package com.hrbot.bot.command;
 
 import com.hrbot.bot.MessageSender;
+import com.hrbot.bot.TelegramEscape;
 import com.hrbot.model.VacancyFilter;
 import com.hrbot.parser.ParserRegistry;
 import com.hrbot.service.FilterService;
@@ -28,13 +29,6 @@ public class AddFilterCommand implements BotCommand {
     private final MessageSender sender;
     private final FilterService filterService;
     private final ParserRegistry parserRegistry;
-
-    private static String escape(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
 
     @Override
     public String getCommand() { return "/addfilter"; }
@@ -98,11 +92,11 @@ public class AddFilterCommand implements BotCommand {
                 🌐 Sites: <code>%s</code>
                 🆔 Filter ID: <code>%d</code>
                 """.formatted(
-                escape(saved.getName()),
-                escape(saved.getKeywords()),
-                saved.getLocation() != null ? escape(saved.getLocation()) : "any",
-                saved.getSalaryMin() != null ? escape(saved.getSalaryMin()) : "any",
-                escape(String.join(", ", saved.getSites())),
+                TelegramEscape.html(saved.getName()),
+                TelegramEscape.html(saved.getKeywords()),
+                saved.getLocation() != null ? TelegramEscape.html(saved.getLocation()) : "any",
+                saved.getSalaryMin() != null ? TelegramEscape.html(saved.getSalaryMin()) : "any",
+                TelegramEscape.html(String.join(", ", saved.getSites())),
                 saved.getId()
         ));
     }

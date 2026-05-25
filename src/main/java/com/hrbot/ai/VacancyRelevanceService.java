@@ -17,14 +17,14 @@ public class VacancyRelevanceService {
             Be strict: the vacancy must match the keywords and requirements.
             """;
 
-    private final DeepSeekClient deepSeekClient;
+    private final AiChatClient aiChatClient;
 
     public boolean isRelevant(Vacancy vacancy, VacancyFilter filter) {
         String userMessage = buildMessage(vacancy, filter);
-        String response = deepSeekClient.chat(SYSTEM_PROMPT, userMessage);
+        String response = aiChatClient.chat(SYSTEM_PROMPT, userMessage);
 
         if (response == null) {
-            log.warn("DeepSeek returned null for vacancy [{}], treating as relevant", vacancy.getUrl());
+            log.warn("AI client returned null for vacancy [{}], treating as relevant", vacancy.getUrl());
             return true;
         }
 

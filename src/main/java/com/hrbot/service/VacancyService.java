@@ -56,13 +56,19 @@ public class VacancyService {
 
     public ScanResult scanSingleSite(VacancyFilter filter, String siteKey) {
         SiteParser parser = parserRegistry.getParser(siteKey);
-        List<Vacancy> vacancies = parser.parse(filter);
+        List<Vacancy> vacancies = filterAdUrls(parser.parse(filter));
         List<Vacancy> relevant = filterByRelevance(vacancies, filter);
         log.info("Site [{}]: {} found, {} relevant after AI filter", siteKey, vacancies.size(), relevant.size());
         statusRegistry.recordSuccess(siteKey, relevant.size());
         ScanResult result = diffDetector.detectChanges(relevant);
         result.setTotalFound(relevant.size());
         return result;
+    }
+
+    private List<Vacancy> filterAdUrls(List<Vacancy> vacancies) {
+        return vacancies.stream()
+                .filter(v -> v.getUrl() != null && !v.getUrl().contains("adsrv"))
+                .toList();
     }
 
     private List<Vacancy> filterByRelevance(List<Vacancy> vacancies, VacancyFilter filter) {

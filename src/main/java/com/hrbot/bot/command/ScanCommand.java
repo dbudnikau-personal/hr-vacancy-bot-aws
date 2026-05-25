@@ -1,8 +1,11 @@
 package com.hrbot.bot.command;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrbot.bot.MessageSender;
+import com.hrbot.bot.TelegramEscape;
 import com.hrbot.model.VacancyFilter;
+import com.hrbot.service.AsyncTaskDispatcher;
 import com.hrbot.service.FilterService;
 import com.hrbot.service.ScanningStateService;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
-import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.model.InvocationType;
-import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -25,19 +24,12 @@ public class ScanCommand implements BotCommand {
 
     private final MessageSender sender;
     private final FilterService filterService;
-    private final LambdaClient lambdaClient;
+    private final AsyncTaskDispatcher taskDispatcher;
     private final ObjectMapper objectMapper;
     private final ScanningStateService scanningStateService;
 
     @Value("${scanner.function.name}")
     private String scannerFunctionName;
-
-    private static String escape(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
 
     @Override
     public String getCommand() { return "/scan"; }
@@ -71,7 +63,8 @@ public class ScanCommand implements BotCommand {
                 }
                 filters = List.of(filter);
             } catch (NumberFormatException e) {
-                sender.sendText(chatId, "❌ Invalid filter ID: <code>%s</code>. Use /filters to see IDs.".formatted(escape(args[0])));
+                sender.sendText(chatId, "❌ Invalid filter ID: <code>%s</code>. Use /filters to see IDs."
+                        .formatted(TelegramEscape.html(args[0])));
                 return;
             }
         } else {
@@ -88,14 +81,11 @@ public class ScanCommand implements BotCommand {
         try {
             List<Long> filterIds = filters.stream().map(VacancyFilter::getId).toList();
             String payload = objectMapper.writeValueAsString(Map.of("chatId", chatId, "filterIds", filterIds));
-
-            lambdaClient.invoke(InvokeRequest.builder()
-                    .functionName(scannerFunctionName)
-                    .invocationType(InvocationType.EVENT)
-                    .payload(SdkBytes.fromUtf8String(payload))
-                    .build());
-
+            taskDispatcher.dispatch(scannerFunctionName, payload);
             log.info("Async scan triggered for chatId={}, filters={}", chatId, filterIds);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize scan payload: {}", e.getMessage(), e);
+            sender.sendText(chatId, "❌ Failed to start scan: " + e.getMessage());
         } catch (Exception e) {
             log.error("Failed to trigger async scan: {}", e.getMessage(), e);
             sender.sendText(chatId, "❌ Failed to start scan: " + e.getMessage());

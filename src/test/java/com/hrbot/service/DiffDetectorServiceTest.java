@@ -97,14 +97,17 @@ class DiffDetectorServiceTest {
     }
 
     @Test
-    void adServerUrls_areFiltered_andNeverSaved() {
+    void adServerUrls_passThrough_filteringIsUpstreamInVacancyService() {
+        // Ad-server URL filtering moved to VacancyService.filterAdUrls() — DiffDetectorService
+        // receives only pre-filtered vacancies and saves them without URL-content checks.
         Vacancy adVacancy = vacancy("https://adsrv.example.com/track/job/5", "Spam", "Spam", null);
+        when(vacancyRepository.findByUrl(adVacancy.getUrl())).thenReturn(Optional.empty());
         when(vacancyRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ScanResult result = diffDetectorService.detectChanges(List.of(adVacancy));
 
-        assertThat(result.getNewVacancies()).isEmpty();
-        verify(vacancyRepository, never()).findByUrl(any());
+        // DiffDetectorService itself no longer filters — that is VacancyService's responsibility
+        assertThat(result.getNewVacancies()).hasSize(1);
     }
 
     @Test

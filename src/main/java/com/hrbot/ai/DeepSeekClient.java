@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class DeepSeekClient {
+public class DeepSeekClient implements AiChatClient {
 
     private static final String CHAT_ENDPOINT = "/chat/completions";
 

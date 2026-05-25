@@ -3,6 +3,7 @@ package com.hrbot.parser.impl;
 import com.hrbot.model.Vacancy;
 import com.hrbot.model.VacancyFilter;
 import com.hrbot.parser.SiteParser;
+import com.hrbot.service.AsyncTaskDispatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -10,16 +11,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.model.InvocationType;
-import software.amazon.awssdk.services.lambda.model.InvokeRequest;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,26 +37,15 @@ public class WellfoundParser implements SiteParser {
 
     private static final int MAX_PAGES = 2;
 
-    private final LambdaClient lambdaClient;
+    private final AsyncTaskDispatcher taskDispatcher;
+    private final SsmClient ssmClient;
 
     @Value("${cookie.refresher.function.name:hr-vacancy-bot-cookie-refresher}")
     private String cookieRefresherFunctionName;
 
-    private SsmClient ssmClient;
-
-    public WellfoundParser(LambdaClient lambdaClient) {
-        this.lambdaClient = lambdaClient;
-    }
-
-    @PostConstruct
-    void init() {
-        try {
-            ssmClient = SsmClient.builder()
-                    .httpClient(UrlConnectionHttpClient.create())
-                    .build();
-        } catch (Exception e) {
-            log.warn("WellfoundParser: failed to create SSM client ({}), parser disabled", e.getMessage());
-        }
+    public WellfoundParser(AsyncTaskDispatcher taskDispatcher, SsmClient ssmClient) {
+        this.taskDispatcher = taskDispatcher;
+        this.ssmClient = ssmClient;
     }
 
     @Override
@@ -116,11 +100,7 @@ public class WellfoundParser implements SiteParser {
     private void refreshCookies() {
         try {
             log.info("Wellfound: invoking cookie-refresher '{}'", cookieRefresherFunctionName);
-            lambdaClient.invoke(InvokeRequest.builder()
-                    .functionName(cookieRefresherFunctionName)
-                    .invocationType(InvocationType.REQUEST_RESPONSE)
-                    .payload(SdkBytes.fromUtf8String("{}"))
-                    .build());
+            taskDispatcher.dispatch(cookieRefresherFunctionName, "{}");
             log.info("Wellfound: cookie-refresher completed");
         } catch (Exception e) {
             log.warn("Wellfound: cookie-refresher invocation failed ({}), will try existing cookies", e.getMessage());
@@ -128,10 +108,6 @@ public class WellfoundParser implements SiteParser {
     }
 
     private boolean loadCookies() {
-        if (ssmClient == null) {
-            log.warn("WellfoundParser: SSM client unavailable, skipping");
-            return false;
-        }
         try {
             this.cachedDatadome    = getParam(SSM_DATADOME);
             this.cachedCfClearance = getParam(SSM_CF_CLEARANCE);
