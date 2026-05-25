@@ -100,7 +100,7 @@ public class WellfoundParser implements SiteParser {
     private void refreshCookies() {
         try {
             log.info("Wellfound: invoking cookie-refresher '{}'", cookieRefresherFunctionName);
-            taskDispatcher.dispatch(cookieRefresherFunctionName, "{}");
+            taskDispatcher.invokeSync(cookieRefresherFunctionName, "{}");
             log.info("Wellfound: cookie-refresher completed");
         } catch (Exception e) {
             log.warn("Wellfound: cookie-refresher invocation failed ({}), will try existing cookies", e.getMessage());
