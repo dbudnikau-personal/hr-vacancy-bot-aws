@@ -32,4 +32,7 @@ logs/
 
 # AWS SAM build artifacts
 .aws-sam/
+
+# Private AI context (Claude) — backed up out-of-band via claude-kb, never committed
 /.claude/
+CLAUDE.md
